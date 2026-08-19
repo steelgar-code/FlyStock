@@ -264,6 +264,21 @@
   .btn-submit:disabled{opacity:0.4;cursor:not-allowed;filter:none;}
   .btn-submit.danger{background:var(--danger);color:#fff;}
 
+  .storage-error{
+    position:fixed;inset:0;background:rgba(8,10,13,0.78);z-index:30;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .storage-error.hidden{display:none !important;}
+  .storage-error-card{
+    width:min(520px,100%);background:var(--surface-2);border:1px solid var(--danger);
+    border-radius:var(--radius);padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.45);
+  }
+  .storage-error-card h2{margin:0 0 10px;font-size:18px;}
+  .storage-error-card p{margin:0;color:var(--text-dim);font-size:13.5px;line-height:1.55;}
+  .storage-error-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;}
+  .danger-outline{color:var(--danger);border-color:var(--danger);}
+  .danger-outline:hover:not(:disabled){background:rgba(193,85,75,0.1);color:var(--text);}
+  .storage-error-warning{margin-top:14px !important;font-size:11.5px !important;color:var(--text-faint) !important;}
   .footer-note{
     text-align:center;margin-top:34px;font-size:12px;color:var(--text-faint);
     line-height:1.6;
@@ -295,7 +310,7 @@
 
   <div class="toolbar">
     <div class="search-wrap">
-      <input id="searchInput" type="text" placeholder="Search type, description, or comment…" autocomplete="off">
+      <input id="searchInput" type="text" placeholder="Search type, description, or notes…" autocomplete="off">
       <button class="clear-search" id="clearSearch" title="Clear search">×</button>
     </div>
     <div class="actions">
@@ -315,14 +330,25 @@
     <div id="emptyState" class="empty hidden"><h3></h3><p></p></div>
   </main>
 
-  <p class="footer-note">Data is stored only in this browser (localStorage) — nothing is sent anywhere. Clearing your browser data will remove it.</p>
+  <p class="footer-note">Data is stored only in this browser (localStorage) — nothing is sent anywhere. Clearing your browser data will remove it. Export regularly for backup.</p>
+  <div class="storage-error hidden" id="storageError" role="alertdialog" aria-modal="true" aria-labelledby="storageErrorTitle">
+    <div class="storage-error-card">
+      <h2 id="storageErrorTitle">Inventory storage could not be read</h2>
+      <p>Your saved inventory data appears to be unavailable or corrupted. FlyStock has not overwritten it.</p>
+      <div class="storage-error-actions">
+        <button class="btn-ghost" id="btnDownloadStorage" type="button">Download Storage Data</button>
+        <button class="btn-ghost danger-outline" id="btnResetInventory" type="button">Reset Inventory</button>
+      </div>
+      <p class="storage-error-warning">Resetting will permanently replace the unreadable inventory with an empty inventory. Download the storage data first if you want to keep a copy.</p>
+    </div>
+  </div>
 </div>
 
 <div class="overlay hidden" id="overlay"></div>
 
 <!-- Add panel -->
 <aside class="panel hidden" id="addPanel" aria-label="Add item">
-  <div class="panel-head"><h2>Add Item</h2><button class="panel-close" data-close="add">×</button></div>
+  <div class="panel-head"><h2>Add Item</h2><button class="panel-close" data-close="add" aria-label="Close">×</button></div>
   <form id="addForm">
     <div class="session-flash" id="addSessionFlash" hidden></div>
     <div class="field">
@@ -338,8 +364,8 @@
       <input id="addDescription" type="text" placeholder="e.g. DeWalt 20V cordless drill, serial #4471" required>
     </div>
     <div class="field">
-      <label for="addComment">Comment</label>
-      <textarea id="addComment" placeholder="Optional notes — condition, location, source…"></textarea>
+      <label for="addComment">Note</label>
+      <textarea id="addComment" placeholder="Optional note — condition, location, source…"></textarea>
     </div>
     <div class="field">
       <label for="addDateInput">Date &amp; Time Added</label>
@@ -354,7 +380,7 @@
 
 <!-- Remove panel -->
 <aside class="panel hidden" id="removePanel" aria-label="Remove item">
-  <div class="panel-head"><h2>Remove Item</h2><button class="panel-close" data-close="remove">×</button></div>
+  <div class="panel-head"><h2>Remove Item</h2><button class="panel-close" data-close="remove" aria-label="Close">×</button></div>
   <form id="removeForm">
     <div class="session-flash" id="removeSessionFlash" hidden></div>
     <div class="field">
@@ -374,8 +400,8 @@
       </div>
     </div>
     <div class="field">
-      <label for="removeComment">Removal Comment</label>
-      <textarea id="removeComment" placeholder="Optional — reason for removal, destination, etc."></textarea>
+      <label for="removeComment">Removal Note</label>
+      <textarea id="removeComment" placeholder="Optional note — reason for removal, destination, etc."></textarea>
     </div>
     <button type="submit" class="btn-submit danger" id="removeSubmitBtn">Remove from Inventory</button>
   </form>
@@ -383,7 +409,7 @@
 
 <!-- Edit panel -->
 <aside class="panel hidden" id="editPanel" aria-label="Edit item">
-  <div class="panel-head"><h2>Edit Item</h2><button class="panel-close" data-close="edit">×</button></div>
+  <div class="panel-head"><h2>Edit Item</h2><button class="panel-close" data-close="edit" aria-label="Close">×</button></div>
   <form id="editForm">
     <div class="field">
       <label for="editTypeSelect">Item Type</label>
@@ -398,7 +424,7 @@
       <input id="editDescription" type="text" required>
     </div>
     <div class="field">
-      <label for="editComment">Comment</label>
+      <label for="editComment">Note</label>
       <textarea id="editComment"></textarea>
     </div>
     <div class="field">
@@ -415,10 +441,6 @@
           <input id="editDateRemovedInput" type="datetime-local">
           <button type="button" class="reset-now-btn" data-reset="editDateRemovedInput">Reset to now</button>
         </div>
-      </div>
-      <div class="field">
-        <label for="editRemovalComment">Removal Comment</label>
-        <textarea id="editRemovalComment"></textarea>
       </div>
     </div>
     <div class="field">
@@ -440,6 +462,26 @@
   </form>
 </aside>
 
+<!-- Restore panel -->
+<aside class="panel hidden" id="restorePanel" aria-label="Restore item">
+  <div class="panel-head"><h2>Restore Item</h2><button class="panel-close" data-close="restore" aria-label="Close">×</button></div>
+  <form id="restoreForm">
+    <div class="preview" id="restorePreview">Select an item to restore.</div>
+    <div class="field">
+      <label for="restoreDateInput">Date &amp; Time Restored</label>
+      <div class="date-row">
+        <input id="restoreDateInput" type="datetime-local" required>
+        <button type="button" class="reset-now-btn" data-reset="restoreDateInput">Reset to now</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="restoreNote">Restore Note</label>
+      <textarea id="restoreNote" placeholder="Optional — where it went back, why, condition, etc."></textarea>
+    </div>
+    <button type="submit" class="btn-submit">Restore to Inventory</button>
+  </form>
+</aside>
+
 <script>
 (function(){
   "use strict";
@@ -448,29 +490,93 @@
   var TAG_COLORS = ["#E8A33D","#7FB069","#5B8DBE","#C1554B","#9B7EDE","#4FB0A5","#D9825F","#8A93A6"];
 
   // ---------- Persistence ----------
+  function normalizeItem(it){
+    if(!it || typeof it !== "object") return null;
+    if(!Array.isArray(it.notes)) it.notes = [];
+
+    // Backward compatibility: migrate the legacy comment into the history as its
+    // first note, using the item's added date. Legacy removal comments are also
+    // migrated into the unified history.
+    if(typeof it.comment === "string" && it.comment.trim()){
+      var hasEquivalent = it.notes.some(function(n){
+        return n && n.text === it.comment && n.date === it.dateAdded;
+      });
+      if(!hasEquivalent){
+        it.notes.unshift({ id: uid(), date: it.dateAdded || new Date().toISOString(), text: it.comment });
+      }
+    }
+    delete it.comment;
+
+    if(typeof it.removalComment === "string" && it.removalComment.trim()){
+      var hasRemovalEquivalent = it.notes.some(function(n){
+        return n && n.text === it.removalComment && n.date === it.dateRemoved;
+      });
+      if(!hasRemovalEquivalent){
+        it.notes.push({ id: uid(), date: it.dateRemoved || new Date().toISOString(), text: it.removalComment });
+      }
+    }
+    delete it.removalComment;
+    return it;
+  }
+
+  function normalizeData(parsed){
+    if(!parsed || typeof parsed !== "object") throw new Error("Invalid inventory data.");
+    if(!Array.isArray(parsed.types)) parsed.types = [];
+    if(!Array.isArray(parsed.items)) parsed.items = [];
+    parsed.items = parsed.items.map(normalizeItem).filter(Boolean);
+    return parsed;
+  }
+
+  var storageLoadError = null;
+
   function loadData(){
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
       if(!raw) return { types: [], items: [] };
-      var parsed = JSON.parse(raw);
-      if(!parsed.types) parsed.types = [];
-      if(!parsed.items) parsed.items = [];
-      parsed.items.forEach(function(it){
-        if(!Array.isArray(it.notes)) it.notes = [];
-      });
-      return parsed;
+      return normalizeData(JSON.parse(raw));
     }catch(e){
       console.error("Failed to load inventory data:", e);
+      storageLoadError = e;
       return { types: [], items: [] };
     }
   }
   function saveData(){
     try{
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      return true;
     }catch(e){
       console.error("Failed to save inventory data:", e);
       alert("Could not save your changes. Your browser storage may be full or unavailable.");
+      return false;
     }
+  }
+  function getRawStorageData(){
+    try{ return localStorage.getItem(STORAGE_KEY); }catch(e){ return null; }
+  }
+  function downloadTextFile(text, filename){
+    var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+  function downloadStorageData(){
+    var raw = getRawStorageData();
+    var stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, "-");
+    downloadTextFile(raw == null ? "" : raw, "stockroom-storage-" + stamp + ".json");
+  }
+  function showStorageError(){ document.getElementById("storageError").classList.remove("hidden"); }
+  function resetInventory(){
+    if(!confirm("Reset inventory? This will replace the unreadable saved data with an empty inventory and cannot be undone.")) return;
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ types: [], items: [] }));
+      storageLoadError = null;
+      data = { types: [], items: [] };
+      document.getElementById("storageError").classList.add("hidden");
+      renderLists();
+      alert("Inventory has been reset.");
+    }catch(e){ alert("Could not reset inventory. Browser storage is unavailable."); }
   }
 
   var data = loadData();
@@ -549,6 +655,16 @@
     return out;
   }
 
+  function getSortedNotes(it){
+    return Array.isArray(it.notes)
+      ? it.notes.filter(function(n){ return n && n.text; }).slice().sort(function(a,b){ return new Date(b.date) - new Date(a.date); })
+      : [];
+  }
+  function getLatestNote(it){
+    var notes = getSortedNotes(it);
+    return notes.length ? notes[0] : null;
+  }
+
   // ---------- Rendering: grouped lists ----------
   var currentListEl = document.getElementById("currentList");
   var removedListEl = document.getElementById("removedList");
@@ -557,16 +673,16 @@
   function matchesSearch(it, q){
     if(!q) return true;
     q = q.toLowerCase();
+    var notesText = getSortedNotes(it).map(function(n){ return n.text; }).join("\n").toLowerCase();
     return (it.type && it.type.toLowerCase().indexOf(q) !== -1) ||
            (it.description && it.description.toLowerCase().indexOf(q) !== -1) ||
-           (it.comment && it.comment.toLowerCase().indexOf(q) !== -1) ||
-           (it.removalComment && it.removalComment.toLowerCase().indexOf(q) !== -1);
+           notesText.indexOf(q) !== -1;
   }
 
   function groupByType(items){
-    var groups = {};
+    var groups = Object.create(null);
     items.forEach(function(it){
-      if(!groups[it.type]) groups[it.type] = [];
+      if(!Object.prototype.hasOwnProperty.call(groups, it.type)) groups[it.type] = [];
       groups[it.type].push(it);
     });
     return groups;
@@ -585,22 +701,24 @@
     desc.textContent = it.description;
     body.appendChild(desc);
 
-    if(it.comment){
+    var latestNote = getLatestNote(it);
+    if(latestNote){
       var comment = document.createElement("div");
       comment.className = "gi-comment";
       var lbl = document.createElement("span");
       lbl.className = "label";
       lbl.textContent = "Note: ";
       comment.appendChild(lbl);
-      comment.appendChild(document.createTextNode(it.comment));
+      comment.appendChild(document.createTextNode(latestNote.text));
       body.appendChild(comment);
     }
 
     var meta = document.createElement("div");
     meta.className = "gi-meta";
     var metaText = "Added " + fmtDate(it.dateAdded);
-    if(it.notes && it.notes.length){
-      metaText += "  ·  " + it.notes.length + " history note" + (it.notes.length === 1 ? "" : "s");
+    var noteCount = getSortedNotes(it).length;
+    if(noteCount){
+      metaText += "  ·  " + noteCount + " history note" + (noteCount === 1 ? "" : "s");
     }
     meta.textContent = metaText;
     body.appendChild(meta);
@@ -612,12 +730,6 @@
       rLbl.className = "label";
       rLbl.textContent = "REMOVED " + fmtDate(it.dateRemoved).toUpperCase();
       rInfo.appendChild(rLbl);
-      if(it.removalComment){
-        var rComment = document.createElement("div");
-        rComment.style.marginTop = "3px";
-        rComment.textContent = it.removalComment;
-        rInfo.appendChild(rComment);
-      }
       body.appendChild(rInfo);
     }
 
@@ -625,6 +737,15 @@
 
     var actions = document.createElement("div");
     actions.className = "gi-actions";
+
+    if(isRemovedList){
+      var restoreBtn = document.createElement("button");
+      restoreBtn.className = "icon-btn edit-btn";
+      restoreBtn.type = "button";
+      restoreBtn.textContent = "Restore";
+      restoreBtn.addEventListener("click", function(){ openRestorePanel(it.id); });
+      actions.appendChild(restoreBtn);
+    }
 
     var editBtn = document.createElement("button");
     editBtn.className = "icon-btn edit-btn";
@@ -775,7 +896,8 @@
   var addPanel = document.getElementById("addPanel");
   var removePanel = document.getElementById("removePanel");
   var editPanel = document.getElementById("editPanel");
-  var ALL_PANELS = [addPanel, removePanel, editPanel];
+  var restorePanel = document.getElementById("restorePanel");
+  var ALL_PANELS = [addPanel, removePanel, editPanel, restorePanel];
 
   function openPanel(panel){
     overlay.classList.remove("hidden");
@@ -904,14 +1026,18 @@
       id: uid(),
       type: finalType,
       description: desc,
-      comment: addComment.value.trim(),
       status: "active",
       dateAdded: isoFromLocalInputValue(addDateInput.value),
       dateRemoved: null,
-      removalComment: "",
       notes: []
     });
-    saveData();
+    var addedNote = addComment.value.trim();
+    if(addedNote){
+      data.items[data.items.length - 1].notes.push({
+        id: uid(), date: data.items[data.items.length - 1].dateAdded, text: addedNote
+      });
+    }
+    if(!saveData()){ data.items.pop(); return; }
     setActiveTab("current");
     renderLists();
     showAddFlash(desc);
@@ -986,10 +1112,11 @@
     var meta = document.createElement("div");
     meta.textContent = "Type: " + it.type + " · Added " + fmtDate(it.dateAdded);
     removePreview.appendChild(meta);
-    if(it.comment){
+    var latestNote = getLatestNote(it);
+    if(latestNote){
       var c = document.createElement("div");
       c.style.marginTop = "4px";
-      c.textContent = "Note: " + it.comment;
+      c.textContent = "Note: " + latestNote.text;
       removePreview.appendChild(c);
     }
   }
@@ -1048,15 +1175,88 @@
     if(!it) return;
     var removedType = it.type;
     var removedDesc = it.description;
+    var oldStatus = it.status;
+    var oldDateRemoved = it.dateRemoved;
+    var oldNotes = it.notes.slice();
     it.status = "removed";
     it.dateRemoved = isoFromLocalInputValue(removeDateInput.value);
-    it.removalComment = removeComment.value.trim();
-    saveData();
+    var removalNote = removeComment.value.trim();
+    if(removalNote){
+      it.notes.push({ id: uid(), date: it.dateRemoved, text: removalNote });
+    }
+    if(!saveData()){
+      it.status = oldStatus;
+      it.dateRemoved = oldDateRemoved;
+      it.notes = oldNotes;
+      return;
+    }
     setActiveTab("removed");
     renderLists();
     showRemoveFlash(removedDesc);
     continueRemoveSession(removedType);
     // Panel intentionally stays open (unless inventory is now empty) for the next removal.
+  });
+
+  // ---------- Restore form ----------
+  var restoreDateInput = document.getElementById("restoreDateInput");
+  var restoreNote = document.getElementById("restoreNote");
+  var restorePreview = document.getElementById("restorePreview");
+  var restoreForm = document.getElementById("restoreForm");
+  var restoringItemId = null;
+
+  function openRestorePanel(itemId){
+    var it = data.items.find(function(x){ return x.id === itemId; });
+    if(!it || it.status !== "removed") return;
+    restoringItemId = itemId;
+    restoreDateInput.value = nowLocalInputValue();
+    restoreNote.value = "";
+    restorePreview.className = "preview";
+    restorePreview.innerHTML = "";
+    var title = document.createElement("div");
+    title.className = "ptitle";
+    title.textContent = it.description;
+    restorePreview.appendChild(title);
+    var meta = document.createElement("div");
+    meta.textContent = "Type: " + it.type + " · Removed " + fmtDate(it.dateRemoved);
+    restorePreview.appendChild(meta);
+    var latest = getLatestNote(it);
+    if(latest){
+      var note = document.createElement("div");
+      note.style.marginTop = "4px";
+      note.textContent = "Latest note: " + latest.text;
+      restorePreview.appendChild(note);
+    }
+    openPanel(restorePanel);
+    setTimeout(function(){ restoreNote.focus(); }, 220);
+  }
+
+  restoreForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var it = data.items.find(function(x){ return x.id === restoringItemId; });
+    if(!it || it.status !== "removed") return;
+
+    var oldStatus = it.status;
+    var oldDateRemoved = it.dateRemoved;
+    var oldNotes = it.notes.slice();
+    it.status = "active";
+    it.dateRemoved = null;
+
+    var text = restoreNote.value.trim();
+    if(text){
+      it.notes.push({ id: uid(), date: isoFromLocalInputValue(restoreDateInput.value), text: text });
+    }
+
+    if(!saveData()){
+      it.status = oldStatus;
+      it.dateRemoved = oldDateRemoved;
+      it.notes = oldNotes;
+      return;
+    }
+
+    setActiveTab("current");
+    closePanels();
+    restoringItemId = null;
+    renderLists();
   });
 
   // ---------- Edit form ----------
@@ -1068,7 +1268,6 @@
   var editDateInput = document.getElementById("editDateInput");
   var editRemovalFields = document.getElementById("editRemovalFields");
   var editDateRemovedInput = document.getElementById("editDateRemovedInput");
-  var editRemovalComment = document.getElementById("editRemovalComment");
   var editForm = document.getElementById("editForm");
   var editNotesList = document.getElementById("editNotesList");
   var newNoteText = document.getElementById("newNoteText");
@@ -1156,13 +1355,13 @@
 
     populateTypeSelect(editTypeSelect, editNewTypeWrap, it.type);
     editDescription.value = it.description;
-    editComment.value = it.comment || "";
+    var editNotes = getSortedNotes(it);
+    editComment.value = editNotes.length ? editNotes[editNotes.length - 1].text : "";
     editDateInput.value = localInputValueFromIso(it.dateAdded);
 
     if(it.status === "removed"){
       editRemovalFields.hidden = false;
       editDateRemovedInput.value = localInputValueFromIso(it.dateRemoved);
-      editRemovalComment.value = it.removalComment || "";
     } else {
       editRemovalFields.hidden = true;
     }
@@ -1194,15 +1393,26 @@
 
     it.type = finalType;
     it.description = desc;
-    it.comment = editComment.value.trim();
     it.dateAdded = isoFromLocalInputValue(editDateInput.value);
+
+    var legacyNoteText = editComment.value.trim();
+    var sortedNotesForEdit = getSortedNotes(it);
+    if(legacyNoteText){
+      if(sortedNotesForEdit.length){
+        sortedNotesForEdit[sortedNotesForEdit.length - 1].text = legacyNoteText;
+      } else {
+        it.notes.push({ id: uid(), date: it.dateAdded, text: legacyNoteText });
+      }
+    } else if(sortedNotesForEdit.length){
+      var oldestNote = sortedNotesForEdit[sortedNotesForEdit.length - 1];
+      it.notes = it.notes.filter(function(n){ return n.id !== oldestNote.id; });
+    }
 
     if(it.status === "removed"){
       it.dateRemoved = isoFromLocalInputValue(editDateRemovedInput.value);
-      it.removalComment = editRemovalComment.value.trim();
     }
 
-    saveData();
+    if(!saveData()) return;
     closePanels();
     editingItemId = null;
     renderLists();
@@ -1233,16 +1443,18 @@
     lines.push("# ---");
     lines.push("");
     data.items.forEach(function(it){
+      var exportNotes = getSortedNotes(it).slice().reverse();
+      var firstExportNote = exportNotes.length ? exportNotes[0] : null;
       lines.push("TYPE: " + escapeField(it.type));
       lines.push("DESCRIPTION: " + escapeField(it.description));
-      lines.push("COMMENT: " + escapeField(it.comment));
+      lines.push("COMMENT: " + escapeField(firstExportNote ? firstExportNote.text : ""));
       lines.push("DATE_ADDED: " + it.dateAdded);
       lines.push("STATUS: " + it.status);
       if(it.status === "removed"){
         lines.push("DATE_REMOVED: " + (it.dateRemoved || ""));
-        lines.push("REMOVAL_COMMENT: " + escapeField(it.removalComment));
+        lines.push("REMOVAL_COMMENT: ");
       }
-      (it.notes || []).slice().sort(function(a,b){ return new Date(a.date) - new Date(b.date); }).forEach(function(note){
+      exportNotes.slice(1).forEach(function(note){
         lines.push("NOTE: " + note.date + " | " + escapeField(note.text));
       });
       lines.push("");
@@ -1316,19 +1528,24 @@
         id: uid(),
         type: type,
         description: description,
-        comment: fields.COMMENT ? unescapeField(fields.COMMENT) : "",
         status: status,
         dateAdded: dateAdded,
         dateRemoved: null,
-        removalComment: "",
         notes: []
       };
+      if(fields.COMMENT){
+        var legacyComment = unescapeField(fields.COMMENT);
+        if(legacyComment) item.notes.push({ id: uid(), date: dateAdded, text: legacyComment });
+      }
 
       if(status === "removed"){
         var dateRemovedParsed = fields.DATE_REMOVED ? new Date(fields.DATE_REMOVED) : null;
         item.dateRemoved = (dateRemovedParsed && !isNaN(dateRemovedParsed.getTime()))
           ? dateRemovedParsed.toISOString() : dateAdded;
-        item.removalComment = fields.REMOVAL_COMMENT ? unescapeField(fields.REMOVAL_COMMENT) : "";
+        var legacyRemovalComment = fields.REMOVAL_COMMENT ? unescapeField(fields.REMOVAL_COMMENT) : "";
+        if(legacyRemovalComment){
+          item.notes.push({ id: uid(), date: item.dateRemoved, text: legacyRemovalComment });
+        }
       }
 
       noteLines.forEach(function(val){
@@ -1403,8 +1620,13 @@
     });
   }
 
+  // ---------- Storage recovery ----------
+  document.getElementById("btnDownloadStorage").addEventListener("click", downloadStorageData);
+  document.getElementById("btnResetInventory").addEventListener("click", resetInventory);
+
   // ---------- Init ----------
   renderLists();
+  if(storageLoadError) showStorageError();
 })();
 </script>
 </body>
