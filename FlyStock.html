@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stockroom — Inventory Tracker</title>
+<style>
+  :root{
+    --bg:#14171C;
+    --surface:#1B1F26;
+    --surface-2:#20252D;
+    --border:#2B313B;
+    --border-soft:#242A33;
+    --text:#E9E7E2;
+    --text-dim:#8D95A6;
+    --text-faint:#5B6373;
+    --accent:#E8A33D;
+    --accent-ink:#1A1305;
+    --danger:#C1554B;
+    --success:#7FB069;
+    --radius:10px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:920px;margin:0 auto;padding:0 20px 60px;}
+
+  /* ---------- Topbar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:28px 0 18px;border-bottom:1px solid var(--border-soft);
+    margin-bottom:22px;flex-wrap:wrap;gap:10px;
+  }
+  .brand{
+    display:flex;align-items:center;gap:10px;
+    font-family:var(--sans);font-weight:800;font-size:20px;
+    letter-spacing:0.14em;text-transform:uppercase;
+  }
+  .brand-mark{
+    color:var(--accent);font-size:18px;transform:translateY(-1px);
+  }
+  .stats{
+    font-family:var(--mono);font-size:12px;letter-spacing:0.06em;
+    color:var(--text-faint);text-transform:uppercase;
+  }
+  .stats b{color:var(--text-dim);font-weight:600;}
+  .topbar-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .io-actions{display:flex;gap:8px;}
+  .btn-ghost{
+    background:transparent;border:1px solid var(--border);color:var(--text-dim);
+    font-family:var(--sans);font-size:12.5px;font-weight:600;
+    padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap;
+  }
+  .btn-ghost:hover:not(:disabled){color:var(--text);border-color:var(--text-faint);}
+  .btn-ghost:disabled{opacity:0.4;cursor:not-allowed;}
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    display:flex;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap;
+  }
+  .search-wrap{position:relative;flex:1 1 260px;min-width:200px;}
+  #searchInput{
+    width:100%;padding:11px 36px 11px 14px;border-radius:var(--radius);
+    border:1px solid var(--border);background:var(--surface);color:var(--text);
+    font-size:14px;font-family:var(--sans);outline:none;transition:border-color .15s;
+  }
+  #searchInput:focus{border-color:var(--accent);}
+  #searchInput::placeholder{color:var(--text-faint);}
+  .clear-search{
+    position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    background:none;border:none;color:var(--text-faint);cursor:pointer;
+    font-size:16px;padding:4px 6px;line-height:1;display:none;
+  }
+  .clear-search:hover{color:var(--text);}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{
+    font-family:var(--sans);font-weight:600;font-size:13.5px;
+    padding:11px 16px;border-radius:var(--radius);cursor:pointer;
+    border:1px solid transparent;transition:filter .12s, transform .05s;
+    white-space:nowrap;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .btn-add{background:var(--accent);color:var(--accent-ink);}
+  .btn-add:hover:not(:disabled){filter:brightness(1.08);}
+  .btn-remove{background:transparent;color:var(--danger);border-color:var(--danger);}
+  .btn-remove:hover:not(:disabled){background:rgba(193,85,75,0.1);}
+
+  /* ---------- Tabs ---------- */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border-soft);margin-bottom:18px;}
+  .tab{
+    background:none;border:none;color:var(--text-faint);cursor:pointer;
+    font-family:var(--sans);font-size:13.5px;font-weight:600;
+    padding:10px 4px;margin-right:22px;border-bottom:2px solid transparent;
+    letter-spacing:0.02em;
+  }
+  .tab.active{color:var(--text);border-bottom-color:var(--accent);}
+  .tab .count{
+    font-family:var(--mono);font-size:11px;color:var(--text-faint);
+    margin-left:6px;
+  }
+  .tab.active .count{color:var(--accent);}
+
+  /* ---------- Groups & compact item rows ---------- */
+  .list{display:flex;flex-direction:column;gap:10px;}
+  .hidden{display:none !important;}
+  .group{
+    border:1px solid var(--border);border-radius:var(--radius);
+    overflow:hidden;background:var(--surface);
+  }
+  .group-header{
+    display:flex;align-items:center;gap:10px;padding:12px 14px;
+    cursor:pointer;user-select:none;
+  }
+  .group-header:hover{background:var(--surface-2);}
+  .group-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .group-name{
+    font-family:var(--mono);font-weight:700;font-size:12.5px;
+    letter-spacing:0.06em;text-transform:uppercase;color:var(--text);
+  }
+  .group-count{font-family:var(--mono);font-size:11px;color:var(--text-faint);}
+  .group-chevron{
+    margin-left:auto;color:var(--text-faint);font-size:11px;
+    transition:transform .15s;
+  }
+  .group.collapsed .group-chevron{transform:rotate(-90deg);}
+  .group-body{border-top:1px solid var(--border-soft);}
+  .group.collapsed .group-body{display:none;}
+
+  .group-item{
+    display:flex;gap:12px;padding:11px 14px 11px 18px;
+    position:relative;border-bottom:1px solid var(--border-soft);
+  }
+  .group-item:last-child{border-bottom:none;}
+  .group-item::before{
+    content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;
+    border-radius:2px;background:var(--item-color, var(--border));
+  }
+  .gi-body{flex:1;min-width:0;}
+  .gi-desc{font-size:14px;color:var(--text);line-height:1.4;word-break:break-word;}
+  .gi-comment{font-size:12.5px;color:var(--text-dim);margin-top:3px;line-height:1.4;word-break:break-word;}
+  .gi-comment .label{color:var(--text-faint);}
+  .gi-meta{font-size:11px;font-family:var(--mono);color:var(--text-faint);margin-top:5px;}
+  .gi-removal{
+    font-size:12px;color:var(--text-dim);margin-top:6px;padding-top:6px;
+    border-top:1px dashed var(--border);
+  }
+  .gi-removal .label{color:var(--danger);font-weight:600;letter-spacing:0.03em;font-size:11px;}
+  .gi-actions{display:flex;gap:6px;flex-shrink:0;align-items:flex-start;}
+  .icon-btn{
+    background:none;border:1px solid var(--border);color:var(--text-faint);
+    font-family:var(--sans);font-size:12px;font-weight:600;
+    padding:7px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;
+  }
+  .icon-btn:hover{color:var(--danger);border-color:var(--danger);background:rgba(193,85,75,0.08);}
+  .icon-btn.edit-btn:hover{color:var(--accent);border-color:var(--accent);background:rgba(232,163,61,0.08);}
+
+  /* ---------- Empty state ---------- */
+  .empty{
+    text-align:center;padding:60px 20px;color:var(--text-faint);
+    border:1px dashed var(--border);border-radius:var(--radius);
+  }
+  .empty h3{color:var(--text-dim);font-size:15px;margin:0 0 6px;font-weight:600;}
+  .empty p{font-size:13.5px;margin:0;line-height:1.5;}
+
+  /* ---------- Overlay & Panel ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(8,10,13,0.6);z-index:10;
+    opacity:0;transition:opacity .18s;
+  }
+  .overlay.show{opacity:1;}
+  .panel{
+    position:fixed;top:0;right:0;bottom:0;width:400px;max-width:92vw;
+    background:var(--surface-2);border-left:1px solid var(--border);
+    z-index:11;box-shadow:-24px 0 48px rgba(0,0,0,0.35);
+    transform:translateX(100%);transition:transform .22s ease;
+    display:flex;flex-direction:column;
+  }
+  .panel.show{transform:translateX(0);}
+  .panel-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 22px;border-bottom:1px solid var(--border-soft);
+  }
+  .panel-head h2{font-size:16px;margin:0;font-weight:700;letter-spacing:0.01em;}
+  .panel-close{
+    background:none;border:none;color:var(--text-faint);font-size:22px;
+    cursor:pointer;line-height:1;padding:2px 6px;
+  }
+  .panel-close:hover{color:var(--text);}
+  form{padding:20px 22px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;}
+  .field label{
+    display:block;font-size:12px;font-weight:600;color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:0.05em;margin-bottom:7px;
+  }
+  .field input[type="text"],
+  .field input:not([type]),
+  .field input[type="datetime-local"],
+  .field select,
+  .field textarea{
+    width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--border);
+    background:var(--surface);color:var(--text);font-family:var(--sans);
+    font-size:14px;outline:none;transition:border-color .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--accent);}
+  .field textarea{resize:vertical;min-height:64px;}
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(0.7);cursor:pointer;}
+  .date-row{display:flex;gap:8px;}
+  .date-row input{flex:1;min-width:0;}
+  .reset-now-btn{
+    background:var(--surface);border:1px solid var(--border);color:var(--text-dim);
+    font-family:var(--sans);font-size:12px;font-weight:600;padding:0 12px;
+    border-radius:8px;cursor:pointer;white-space:nowrap;
+  }
+  .reset-now-btn:hover{color:var(--text);border-color:var(--text-faint);}
+  .session-flash{
+    background:rgba(127,176,105,0.12);border:1px solid rgba(127,176,105,0.35);
+    color:var(--success);font-size:12.5px;font-weight:600;line-height:1.4;
+    padding:10px 12px;border-radius:8px;
+  }
+  .notes-list{
+    display:flex;flex-direction:column;gap:8px;max-height:220px;
+    overflow-y:auto;margin-bottom:2px;
+  }
+  .notes-empty{font-size:12.5px;color:var(--text-faint);font-style:italic;padding:2px;}
+  .note-row{
+    background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    padding:9px 11px;display:flex;gap:10px;align-items:flex-start;
+  }
+  .note-row .note-body{flex:1;min-width:0;}
+  .note-row .note-date{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-bottom:3px;}
+  .note-row .note-text{font-size:13px;color:var(--text);line-height:1.4;white-space:pre-wrap;word-break:break-word;}
+  .note-del{
+    background:none;border:none;color:var(--text-faint);cursor:pointer;
+    font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0;
+  }
+  .note-del:hover{color:var(--danger);}
+  .note-add-row{display:flex;flex-direction:column;gap:8px;}
+  .btn-add-note{
+    align-self:flex-start;background:var(--surface);border:1px solid var(--accent);
+    color:var(--accent);font-family:var(--sans);font-weight:600;font-size:12.5px;
+    padding:8px 14px;border-radius:8px;cursor:pointer;
+  }
+  .btn-add-note:hover{background:rgba(232,163,61,0.1);}
+  .preview{
+    background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    padding:12px 14px;font-size:13px;color:var(--text-dim);line-height:1.5;
+  }
+  .preview .ptitle{color:var(--text);font-weight:600;margin-bottom:3px;}
+  .preview.empty-preview{color:var(--text-faint);font-style:italic;}
+  .btn-submit{
+    margin-top:4px;background:var(--accent);color:var(--accent-ink);
+    border:none;border-radius:8px;padding:13px;font-size:14px;font-weight:700;
+    cursor:pointer;font-family:var(--sans);
+  }
+  .btn-submit:hover{filter:brightness(1.08);}
+  .btn-submit:disabled{opacity:0.4;cursor:not-allowed;filter:none;}
+  .btn-submit.danger{background:var(--danger);color:#fff;}
+
+  .footer-note{
+    text-align:center;margin-top:34px;font-size:12px;color:var(--text-faint);
+    line-height:1.6;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .panel, .overlay{transition:none;}
+  }
+  @media (max-width:560px){
+    .panel{width:100vw;max-width:100vw;}
+    .topbar{padding-top:20px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">▣</span> Stockroom</div>
+    <div class="topbar-right">
+      <div class="stats">CURRENT&nbsp;<b id="statCurrent">0</b> &nbsp;·&nbsp; REMOVED&nbsp;<b id="statRemoved">0</b></div>
+      <div class="io-actions">
+        <button class="btn-ghost" id="btnExport" type="button" title="Download all inventory data as a text file">Export</button>
+        <button class="btn-ghost" id="btnImport" type="button" title="Add items from a previously exported text file">Import</button>
+        <input type="file" id="importFileInput" accept=".txt,text/plain" hidden>
+      </div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <input id="searchInput" type="text" placeholder="Search type, description, or comment…" autocomplete="off">
+      <button class="clear-search" id="clearSearch" title="Clear search">×</button>
+    </div>
+    <div class="actions">
+      <button class="btn btn-add" id="btnAdd">+ Add Item</button>
+      <button class="btn btn-remove" id="btnRemove">− Remove Item</button>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="current">Current Inventory <span class="count" id="tabCurrentCount"></span></button>
+    <button class="tab" data-tab="removed">Removed Items <span class="count" id="tabRemovedCount"></span></button>
+  </nav>
+
+  <main>
+    <div id="currentList" class="list"></div>
+    <div id="removedList" class="list hidden"></div>
+    <div id="emptyState" class="empty hidden"><h3></h3><p></p></div>
+  </main>
+
+  <p class="footer-note">Data is stored only in this browser (localStorage) — nothing is sent anywhere. Clearing your browser data will remove it.</p>
+</div>
+
+<div class="overlay hidden" id="overlay"></div>
+
+<!-- Add panel -->
+<aside class="panel hidden" id="addPanel" aria-label="Add item">
+  <div class="panel-head"><h2>Add Item</h2><button class="panel-close" data-close="add">×</button></div>
+  <form id="addForm">
+    <div class="session-flash" id="addSessionFlash" hidden></div>
+    <div class="field">
+      <label for="addTypeSelect">Item Type</label>
+      <select id="addTypeSelect"></select>
+    </div>
+    <div class="field" id="addNewTypeWrap" hidden>
+      <label for="addNewTypeInput">New Type Name</label>
+      <input id="addNewTypeInput" type="text" placeholder="e.g. Power Tools">
+    </div>
+    <div class="field">
+      <label for="addDescription">Description</label>
+      <input id="addDescription" type="text" placeholder="e.g. DeWalt 20V cordless drill, serial #4471" required>
+    </div>
+    <div class="field">
+      <label for="addComment">Comment</label>
+      <textarea id="addComment" placeholder="Optional notes — condition, location, source…"></textarea>
+    </div>
+    <div class="field">
+      <label for="addDateInput">Date &amp; Time Added</label>
+      <div class="date-row">
+        <input id="addDateInput" type="datetime-local" required>
+        <button type="button" class="reset-now-btn" data-reset="addDateInput">Reset to now</button>
+      </div>
+    </div>
+    <button type="submit" class="btn-submit">Add to Inventory</button>
+  </form>
+</aside>
+
+<!-- Remove panel -->
+<aside class="panel hidden" id="removePanel" aria-label="Remove item">
+  <div class="panel-head"><h2>Remove Item</h2><button class="panel-close" data-close="remove">×</button></div>
+  <form id="removeForm">
+    <div class="session-flash" id="removeSessionFlash" hidden></div>
+    <div class="field">
+      <label for="removeTypeSelect">Item Type</label>
+      <select id="removeTypeSelect"></select>
+    </div>
+    <div class="field">
+      <label for="removeItemSelect">Item</label>
+      <select id="removeItemSelect"></select>
+    </div>
+    <div class="preview" id="removePreview">Select an item to see its details.</div>
+    <div class="field">
+      <label for="removeDateInput">Date &amp; Time Removed</label>
+      <div class="date-row">
+        <input id="removeDateInput" type="datetime-local" required>
+        <button type="button" class="reset-now-btn" data-reset="removeDateInput">Reset to now</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="removeComment">Removal Comment</label>
+      <textarea id="removeComment" placeholder="Optional — reason for removal, destination, etc."></textarea>
+    </div>
+    <button type="submit" class="btn-submit danger" id="removeSubmitBtn">Remove from Inventory</button>
+  </form>
+</aside>
+
+<!-- Edit panel -->
+<aside class="panel hidden" id="editPanel" aria-label="Edit item">
+  <div class="panel-head"><h2>Edit Item</h2><button class="panel-close" data-close="edit">×</button></div>
+  <form id="editForm">
+    <div class="field">
+      <label for="editTypeSelect">Item Type</label>
+      <select id="editTypeSelect"></select>
+    </div>
+    <div class="field" id="editNewTypeWrap" hidden>
+      <label for="editNewTypeInput">New Type Name</label>
+      <input id="editNewTypeInput" type="text" placeholder="e.g. Power Tools">
+    </div>
+    <div class="field">
+      <label for="editDescription">Description</label>
+      <input id="editDescription" type="text" required>
+    </div>
+    <div class="field">
+      <label for="editComment">Comment</label>
+      <textarea id="editComment"></textarea>
+    </div>
+    <div class="field">
+      <label for="editDateInput">Date &amp; Time Added</label>
+      <div class="date-row">
+        <input id="editDateInput" type="datetime-local" required>
+        <button type="button" class="reset-now-btn" data-reset="editDateInput">Reset to now</button>
+      </div>
+    </div>
+    <div id="editRemovalFields" hidden>
+      <div class="field">
+        <label for="editDateRemovedInput">Date &amp; Time Removed</label>
+        <div class="date-row">
+          <input id="editDateRemovedInput" type="datetime-local">
+          <button type="button" class="reset-now-btn" data-reset="editDateRemovedInput">Reset to now</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="editRemovalComment">Removal Comment</label>
+        <textarea id="editRemovalComment"></textarea>
+      </div>
+    </div>
+    <div class="field">
+      <label>History Notes</label>
+      <div class="notes-list" id="editNotesList"></div>
+    </div>
+    <div class="field">
+      <label for="newNoteText">Add a Note</label>
+      <div class="note-add-row">
+        <textarea id="newNoteText" placeholder="What happened? e.g. Sent out for repair…" rows="2"></textarea>
+        <div class="date-row">
+          <input id="newNoteDate" type="datetime-local">
+          <button type="button" class="reset-now-btn" data-reset="newNoteDate">Reset to now</button>
+        </div>
+        <button type="button" class="btn-add-note" id="addNoteBtn">+ Add Note</button>
+      </div>
+    </div>
+    <button type="submit" class="btn-submit">Save Changes</button>
+  </form>
+</aside>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "stockroom_inventory_v1";
+  var TAG_COLORS = ["#E8A33D","#7FB069","#5B8DBE","#C1554B","#9B7EDE","#4FB0A5","#D9825F","#8A93A6"];
+
+  // ---------- Persistence ----------
+  function loadData(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return { types: [], items: [] };
+      var parsed = JSON.parse(raw);
+      if(!parsed.types) parsed.types = [];
+      if(!parsed.items) parsed.items = [];
+      parsed.items.forEach(function(it){
+        if(!Array.isArray(it.notes)) it.notes = [];
+      });
+      return parsed;
+    }catch(e){
+      console.error("Failed to load inventory data:", e);
+      return { types: [], items: [] };
+    }
+  }
+  function saveData(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }catch(e){
+      console.error("Failed to save inventory data:", e);
+      alert("Could not save your changes. Your browser storage may be full or unavailable.");
+    }
+  }
+
+  var data = loadData();
+  var activeTab = "current";
+  var searchQuery = "";
+  var collapsedGroups = {};
+  var editingItemId = null;
+
+  // ---------- Helpers ----------
+  function uid(){
+    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+  }
+  function colorForType(type){
+    var hash = 0;
+    for(var i=0;i<type.length;i++){
+      hash = type.charCodeAt(i) + ((hash << 5) - hash);
+      hash |= 0;
+    }
+    return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
+  }
+  function fmtDate(iso){
+    var d = new Date(iso);
+    return d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}) +
+      " · " + d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
+  }
+  function pad(n){ return n < 10 ? "0" + n : "" + n; }
+  function nowLocalInputValue(){
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) +
+      "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  function localInputValueFromIso(iso){
+    if(!iso) return nowLocalInputValue();
+    var d = new Date(iso);
+    if(isNaN(d.getTime())) return nowLocalInputValue();
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) +
+      "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  function isoFromLocalInputValue(val){
+    if(!val) return new Date().toISOString();
+    var d = new Date(val);
+    if(isNaN(d.getTime())) return new Date().toISOString();
+    return d.toISOString();
+  }
+  function ensureType(typeName){
+    var exists = data.types.some(function(t){ return t.toLowerCase() === typeName.toLowerCase(); });
+    if(!exists) data.types.push(typeName);
+  }
+  function typesWithActiveItems(){
+    var set = {};
+    data.items.forEach(function(it){
+      if(it.status === "active") set[it.type] = true;
+    });
+    return Object.keys(set).sort(function(a,b){ return a.localeCompare(b); });
+  }
+  // Escape backslashes/pipes/newlines so multi-line fields survive the line-based export
+  // format, and so the "date | text" pairing in NOTE lines stays unambiguous.
+  function escapeField(str){
+    str = str == null ? "" : String(str);
+    return str.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\r\n|\r|\n/g, "\\n");
+  }
+  function unescapeField(str){
+    str = str == null ? "" : String(str);
+    var out = "";
+    for(var i = 0; i < str.length; i++){
+      var ch = str[i];
+      if(ch === "\\" && i + 1 < str.length){
+        var next = str[i+1];
+        if(next === "n"){ out += "\n"; i++; continue; }
+        if(next === "|"){ out += "|"; i++; continue; }
+        if(next === "\\"){ out += "\\"; i++; continue; }
+      }
+      out += ch;
+    }
+    return out;
+  }
+
+  // ---------- Rendering: grouped lists ----------
+  var currentListEl = document.getElementById("currentList");
+  var removedListEl = document.getElementById("removedList");
+  var emptyStateEl = document.getElementById("emptyState");
+
+  function matchesSearch(it, q){
+    if(!q) return true;
+    q = q.toLowerCase();
+    return (it.type && it.type.toLowerCase().indexOf(q) !== -1) ||
+           (it.description && it.description.toLowerCase().indexOf(q) !== -1) ||
+           (it.comment && it.comment.toLowerCase().indexOf(q) !== -1) ||
+           (it.removalComment && it.removalComment.toLowerCase().indexOf(q) !== -1);
+  }
+
+  function groupByType(items){
+    var groups = {};
+    items.forEach(function(it){
+      if(!groups[it.type]) groups[it.type] = [];
+      groups[it.type].push(it);
+    });
+    return groups;
+  }
+
+  function buildItemRow(it, isRemovedList, color){
+    var row = document.createElement("div");
+    row.className = "group-item";
+    row.style.setProperty("--item-color", color);
+
+    var body = document.createElement("div");
+    body.className = "gi-body";
+
+    var desc = document.createElement("div");
+    desc.className = "gi-desc";
+    desc.textContent = it.description;
+    body.appendChild(desc);
+
+    if(it.comment){
+      var comment = document.createElement("div");
+      comment.className = "gi-comment";
+      var lbl = document.createElement("span");
+      lbl.className = "label";
+      lbl.textContent = "Note: ";
+      comment.appendChild(lbl);
+      comment.appendChild(document.createTextNode(it.comment));
+      body.appendChild(comment);
+    }
+
+    var meta = document.createElement("div");
+    meta.className = "gi-meta";
+    var metaText = "Added " + fmtDate(it.dateAdded);
+    if(it.notes && it.notes.length){
+      metaText += "  ·  " + it.notes.length + " history note" + (it.notes.length === 1 ? "" : "s");
+    }
+    meta.textContent = metaText;
+    body.appendChild(meta);
+
+    if(isRemovedList){
+      var rInfo = document.createElement("div");
+      rInfo.className = "gi-removal";
+      var rLbl = document.createElement("div");
+      rLbl.className = "label";
+      rLbl.textContent = "REMOVED " + fmtDate(it.dateRemoved).toUpperCase();
+      rInfo.appendChild(rLbl);
+      if(it.removalComment){
+        var rComment = document.createElement("div");
+        rComment.style.marginTop = "3px";
+        rComment.textContent = it.removalComment;
+        rInfo.appendChild(rComment);
+      }
+      body.appendChild(rInfo);
+    }
+
+    row.appendChild(body);
+
+    var actions = document.createElement("div");
+    actions.className = "gi-actions";
+
+    var editBtn = document.createElement("button");
+    editBtn.className = "icon-btn edit-btn";
+    editBtn.type = "button";
+    editBtn.textContent = "Edit";
+    editBtn.addEventListener("click", function(){ openEditPanel(it.id); });
+    actions.appendChild(editBtn);
+
+    if(!isRemovedList){
+      var removeBtn = document.createElement("button");
+      removeBtn.className = "icon-btn";
+      removeBtn.type = "button";
+      removeBtn.textContent = "Remove";
+      removeBtn.addEventListener("click", function(){ openRemovePanel(it.id); });
+      actions.appendChild(removeBtn);
+    }
+
+    row.appendChild(actions);
+    return row;
+  }
+
+  function buildGroup(type, items, isRemovedList){
+    var color = colorForType(type);
+    var key = (isRemovedList ? "r:" : "c:") + type;
+    var collapsed = !!collapsedGroups[key];
+
+    var group = document.createElement("div");
+    group.className = "group" + (collapsed ? " collapsed" : "");
+
+    var header = document.createElement("div");
+    header.className = "group-header";
+    var dot = document.createElement("span");
+    dot.className = "group-dot";
+    dot.style.background = color;
+    header.appendChild(dot);
+    var name = document.createElement("span");
+    name.className = "group-name";
+    name.textContent = type;
+    header.appendChild(name);
+    var count = document.createElement("span");
+    count.className = "group-count";
+    count.textContent = items.length;
+    header.appendChild(count);
+    var chevron = document.createElement("span");
+    chevron.className = "group-chevron";
+    chevron.textContent = "▾";
+    header.appendChild(chevron);
+    header.addEventListener("click", function(){
+      collapsedGroups[key] = !collapsedGroups[key];
+      renderLists();
+    });
+    group.appendChild(header);
+
+    var body = document.createElement("div");
+    body.className = "group-body";
+    items.forEach(function(it){
+      body.appendChild(buildItemRow(it, isRemovedList, color));
+    });
+    group.appendChild(body);
+
+    return group;
+  }
+
+  function renderGroupedList(container, items, isRemovedList){
+    container.innerHTML = "";
+    var groups = groupByType(items);
+    var typeNames = Object.keys(groups).sort(function(a,b){ return a.localeCompare(b); });
+    typeNames.forEach(function(type){
+      var groupItems = groups[type];
+      groupItems.sort(function(a,b){
+        var da = isRemovedList ? a.dateRemoved : a.dateAdded;
+        var db = isRemovedList ? b.dateRemoved : b.dateAdded;
+        return new Date(db) - new Date(da);
+      });
+      container.appendChild(buildGroup(type, groupItems, isRemovedList));
+    });
+  }
+
+  function renderLists(){
+    var currentItems = data.items.filter(function(it){ return it.status === "active" && matchesSearch(it, searchQuery); });
+    var removedItems = data.items.filter(function(it){ return it.status === "removed" && matchesSearch(it, searchQuery); });
+
+    renderGroupedList(currentListEl, currentItems, false);
+    renderGroupedList(removedListEl, removedItems, true);
+
+    var totalActive = data.items.filter(function(it){ return it.status === "active"; }).length;
+    var totalRemoved = data.items.filter(function(it){ return it.status === "removed"; }).length;
+
+    document.getElementById("statCurrent").textContent = totalActive;
+    document.getElementById("statRemoved").textContent = totalRemoved;
+    document.getElementById("tabCurrentCount").textContent = totalActive;
+    document.getElementById("tabRemovedCount").textContent = totalRemoved;
+
+    var isCurrentTab = activeTab === "current";
+    var listIsEmpty = isCurrentTab ? currentItems.length === 0 : removedItems.length === 0;
+
+    currentListEl.classList.toggle("hidden", !isCurrentTab || listIsEmpty);
+    removedListEl.classList.toggle("hidden", isCurrentTab || listIsEmpty);
+    emptyStateEl.classList.toggle("hidden", !listIsEmpty);
+
+    if(listIsEmpty){
+      var h3 = emptyStateEl.querySelector("h3");
+      var p = emptyStateEl.querySelector("p");
+      if(searchQuery){
+        h3.textContent = "No matches";
+        p.textContent = "No " + (isCurrentTab ? "current inventory" : "removed items") + " match “" + searchQuery + "”.";
+      } else if(isCurrentTab){
+        h3.textContent = "No inventory yet";
+        p.textContent = "Add your first item to get started.";
+      } else {
+        h3.textContent = "Nothing removed yet";
+        p.textContent = "Items you take out of inventory will show up here.";
+      }
+    }
+
+    updateRemoveAvailability();
+    updateIOAvailability();
+  }
+
+  // ---------- Tabs ----------
+  document.querySelectorAll(".tab").forEach(function(tabBtn){
+    tabBtn.addEventListener("click", function(){
+      document.querySelectorAll(".tab").forEach(function(t){ t.classList.remove("active"); });
+      tabBtn.classList.add("active");
+      activeTab = tabBtn.getAttribute("data-tab");
+      renderLists();
+    });
+  });
+
+  // ---------- Search ----------
+  var searchInput = document.getElementById("searchInput");
+  var clearSearchBtn = document.getElementById("clearSearch");
+  searchInput.addEventListener("input", function(){
+    searchQuery = searchInput.value.trim();
+    clearSearchBtn.style.display = searchQuery ? "block" : "none";
+    renderLists();
+  });
+  clearSearchBtn.addEventListener("click", function(){
+    searchInput.value = "";
+    searchQuery = "";
+    clearSearchBtn.style.display = "none";
+    renderLists();
+    searchInput.focus();
+  });
+
+  // ---------- Panels: open/close ----------
+  var overlay = document.getElementById("overlay");
+  var addPanel = document.getElementById("addPanel");
+  var removePanel = document.getElementById("removePanel");
+  var editPanel = document.getElementById("editPanel");
+  var ALL_PANELS = [addPanel, removePanel, editPanel];
+
+  function openPanel(panel){
+    overlay.classList.remove("hidden");
+    panel.classList.remove("hidden");
+    requestAnimationFrame(function(){
+      overlay.classList.add("show");
+      panel.classList.add("show");
+    });
+  }
+  function closePanels(){
+    ALL_PANELS.forEach(function(p){ p.classList.remove("show"); });
+    overlay.classList.remove("show");
+    setTimeout(function(){
+      ALL_PANELS.forEach(function(p){ p.classList.add("hidden"); });
+      overlay.classList.add("hidden");
+    }, 200);
+  }
+  overlay.addEventListener("click", closePanels);
+  document.querySelectorAll("[data-close]").forEach(function(btn){
+    btn.addEventListener("click", closePanels);
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape") closePanels();
+  });
+
+  // Generic "reset to now" buttons for all date fields
+  document.querySelectorAll(".reset-now-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var targetId = btn.getAttribute("data-reset");
+      document.getElementById(targetId).value = nowLocalInputValue();
+    });
+  });
+
+  // Shared type-select populator (used by Add and Edit forms)
+  function populateTypeSelect(selectEl, wrapEl, preselect){
+    var sorted = data.types.slice().sort(function(a,b){ return a.localeCompare(b); });
+    selectEl.innerHTML = "";
+    sorted.forEach(function(t){
+      var opt = document.createElement("option");
+      opt.value = t;
+      opt.textContent = t;
+      selectEl.appendChild(opt);
+    });
+    var newOpt = document.createElement("option");
+    newOpt.value = "__new__";
+    newOpt.textContent = "+ Add new type…";
+    selectEl.appendChild(newOpt);
+
+    if(preselect && sorted.indexOf(preselect) !== -1){
+      selectEl.value = preselect;
+      wrapEl.hidden = true;
+    } else if(sorted.length === 0){
+      selectEl.value = "__new__";
+      wrapEl.hidden = false;
+    } else {
+      selectEl.value = sorted[0];
+      wrapEl.hidden = true;
+    }
+  }
+  function resolveTypeFromSelect(selectEl, newInputEl){
+    if(selectEl.value === "__new__"){
+      return newInputEl.value.trim() || null;
+    }
+    return selectEl.value;
+  }
+
+  // ---------- Add form ----------
+  var addTypeSelect = document.getElementById("addTypeSelect");
+  var addNewTypeWrap = document.getElementById("addNewTypeWrap");
+  var addNewTypeInput = document.getElementById("addNewTypeInput");
+  var addDescription = document.getElementById("addDescription");
+  var addComment = document.getElementById("addComment");
+  var addDateInput = document.getElementById("addDateInput");
+  var addForm = document.getElementById("addForm");
+  var btnAdd = document.getElementById("btnAdd");
+  var addSessionFlash = document.getElementById("addSessionFlash");
+  var addSessionCount = 0;
+
+  addTypeSelect.addEventListener("change", function(){
+    var isNew = addTypeSelect.value === "__new__";
+    addNewTypeWrap.hidden = !isNew;
+    if(isNew) addNewTypeInput.focus();
+  });
+
+  btnAdd.addEventListener("click", function(){
+    addForm.reset();
+    populateTypeSelect(addTypeSelect, addNewTypeWrap, null);
+    addDateInput.value = nowLocalInputValue();
+    addSessionCount = 0;
+    addSessionFlash.hidden = true;
+    openPanel(addPanel);
+    setTimeout(function(){ addDescription.focus(); }, 220);
+  });
+
+  function showAddFlash(desc){
+    addSessionCount++;
+    var shortDesc = desc.length > 44 ? desc.slice(0,44) + "…" : desc;
+    addSessionFlash.hidden = false;
+    addSessionFlash.textContent = "✓ Added \u201C" + shortDesc + "\u201D — " +
+      addSessionCount + " item" + (addSessionCount === 1 ? "" : "s") + " added this session.";
+  }
+
+  // Ready the form for the next item: clear Description (always unique) and refresh the
+  // Type list (in case a new type was just created), but re-select the same type, and leave
+  // Comment / Date & Time as they were — those carry over until the person changes them.
+  function continueAddSession(previousType){
+    populateTypeSelect(addTypeSelect, addNewTypeWrap, previousType);
+    addDescription.value = "";
+    addDescription.focus();
+  }
+
+  addForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var finalType = resolveTypeFromSelect(addTypeSelect, addNewTypeInput);
+    if(!finalType){
+      addNewTypeInput.focus();
+      return;
+    }
+    var desc = addDescription.value.trim();
+    if(!desc){
+      addDescription.focus();
+      return;
+    }
+    ensureType(finalType);
+    data.items.push({
+      id: uid(),
+      type: finalType,
+      description: desc,
+      comment: addComment.value.trim(),
+      status: "active",
+      dateAdded: isoFromLocalInputValue(addDateInput.value),
+      dateRemoved: null,
+      removalComment: "",
+      notes: []
+    });
+    saveData();
+    setActiveTab("current");
+    renderLists();
+    showAddFlash(desc);
+    continueAddSession(finalType);
+    // Panel intentionally stays open so the next item can be entered right away.
+  });
+
+  // ---------- Remove form ----------
+  var removeTypeSelect = document.getElementById("removeTypeSelect");
+  var removeItemSelect = document.getElementById("removeItemSelect");
+  var removePreview = document.getElementById("removePreview");
+  var removeDateInput = document.getElementById("removeDateInput");
+  var removeComment = document.getElementById("removeComment");
+  var removeForm = document.getElementById("removeForm");
+  var removeSubmitBtn = document.getElementById("removeSubmitBtn");
+  var btnRemove = document.getElementById("btnRemove");
+  var removeSessionFlash = document.getElementById("removeSessionFlash");
+  var removeSessionCount = 0;
+
+  function updateRemoveAvailability(){
+    var hasActive = data.items.some(function(it){ return it.status === "active"; });
+    btnRemove.disabled = !hasActive;
+    btnRemove.title = hasActive ? "" : "No items in inventory to remove";
+  }
+
+  function populateRemoveTypeSelect(presetType){
+    var types = typesWithActiveItems();
+    removeTypeSelect.innerHTML = "";
+    types.forEach(function(t){
+      var opt = document.createElement("option");
+      opt.value = t;
+      opt.textContent = t;
+      removeTypeSelect.appendChild(opt);
+    });
+    if(presetType && types.indexOf(presetType) !== -1){
+      removeTypeSelect.value = presetType;
+    }
+  }
+  function populateRemoveItemSelect(presetItemId){
+    var type = removeTypeSelect.value;
+    var items = data.items.filter(function(it){ return it.status === "active" && it.type === type; });
+    items.sort(function(a,b){ return new Date(b.dateAdded) - new Date(a.dateAdded); });
+    removeItemSelect.innerHTML = "";
+    items.forEach(function(it){
+      var opt = document.createElement("option");
+      opt.value = it.id;
+      var shortDesc = it.description.length > 46 ? it.description.slice(0,46) + "…" : it.description;
+      opt.textContent = shortDesc + "  (" + fmtDate(it.dateAdded).split(" · ")[0] + ")";
+      removeItemSelect.appendChild(opt);
+    });
+    if(presetItemId){
+      removeItemSelect.value = presetItemId;
+    }
+    updateRemovePreview();
+  }
+  function updateRemovePreview(){
+    var id = removeItemSelect.value;
+    var it = data.items.find(function(x){ return x.id === id; });
+    if(!it){
+      removePreview.className = "preview empty-preview";
+      removePreview.textContent = "No item selected.";
+      removeSubmitBtn.disabled = true;
+      return;
+    }
+    removeSubmitBtn.disabled = false;
+    removePreview.className = "preview";
+    removePreview.innerHTML = "";
+    var t = document.createElement("div");
+    t.className = "ptitle";
+    t.textContent = it.description;
+    removePreview.appendChild(t);
+    var meta = document.createElement("div");
+    meta.textContent = "Type: " + it.type + " · Added " + fmtDate(it.dateAdded);
+    removePreview.appendChild(meta);
+    if(it.comment){
+      var c = document.createElement("div");
+      c.style.marginTop = "4px";
+      c.textContent = "Note: " + it.comment;
+      removePreview.appendChild(c);
+    }
+  }
+
+  removeTypeSelect.addEventListener("change", function(){ populateRemoveItemSelect(); });
+  removeItemSelect.addEventListener("change", updateRemovePreview);
+
+  function openRemovePanel(presetItemId){
+    var presetType = null;
+    if(presetItemId){
+      var it = data.items.find(function(x){ return x.id === presetItemId; });
+      if(it) presetType = it.type;
+    }
+    populateRemoveTypeSelect(presetType);
+    populateRemoveItemSelect(presetItemId);
+    removeDateInput.value = nowLocalInputValue();
+    removeComment.value = "";
+    removeSessionCount = 0;
+    removeSessionFlash.hidden = true;
+    openPanel(removePanel);
+  }
+  btnRemove.addEventListener("click", function(){
+    if(btnRemove.disabled) return;
+    openRemovePanel();
+  });
+
+  function showRemoveFlash(desc){
+    removeSessionCount++;
+    var shortDesc = desc.length > 44 ? desc.slice(0,44) + "…" : desc;
+    removeSessionFlash.hidden = false;
+    removeSessionFlash.textContent = "✓ Removed \u201C" + shortDesc + "\u201D — " +
+      removeSessionCount + " item" + (removeSessionCount === 1 ? "" : "s") + " removed this session.";
+  }
+
+  // Ready the form for the next removal: refresh the Type/Item lists against what's still
+  // active (re-selecting the same type if it still has stock), but leave Date & Time / Removal
+  // Comment as they were — those carry over until the person changes them. If nothing is left
+  // to remove, close the panel instead of leaving a broken, empty form open.
+  function continueRemoveSession(previousType){
+    var stillHasStock = typesWithActiveItems().length > 0;
+    if(!stillHasStock){
+      closePanels();
+      setTimeout(function(){
+        alert("That was the last item — inventory is now empty. Nothing left to remove.");
+      }, 250);
+      return;
+    }
+    populateRemoveTypeSelect(previousType);
+    populateRemoveItemSelect();
+  }
+
+  removeForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var id = removeItemSelect.value;
+    var it = data.items.find(function(x){ return x.id === id; });
+    if(!it) return;
+    var removedType = it.type;
+    var removedDesc = it.description;
+    it.status = "removed";
+    it.dateRemoved = isoFromLocalInputValue(removeDateInput.value);
+    it.removalComment = removeComment.value.trim();
+    saveData();
+    setActiveTab("removed");
+    renderLists();
+    showRemoveFlash(removedDesc);
+    continueRemoveSession(removedType);
+    // Panel intentionally stays open (unless inventory is now empty) for the next removal.
+  });
+
+  // ---------- Edit form ----------
+  var editTypeSelect = document.getElementById("editTypeSelect");
+  var editNewTypeWrap = document.getElementById("editNewTypeWrap");
+  var editNewTypeInput = document.getElementById("editNewTypeInput");
+  var editDescription = document.getElementById("editDescription");
+  var editComment = document.getElementById("editComment");
+  var editDateInput = document.getElementById("editDateInput");
+  var editRemovalFields = document.getElementById("editRemovalFields");
+  var editDateRemovedInput = document.getElementById("editDateRemovedInput");
+  var editRemovalComment = document.getElementById("editRemovalComment");
+  var editForm = document.getElementById("editForm");
+  var editNotesList = document.getElementById("editNotesList");
+  var newNoteText = document.getElementById("newNoteText");
+  var newNoteDate = document.getElementById("newNoteDate");
+  var addNoteBtn = document.getElementById("addNoteBtn");
+
+  editTypeSelect.addEventListener("change", function(){
+    var isNew = editTypeSelect.value === "__new__";
+    editNewTypeWrap.hidden = !isNew;
+    if(isNew) editNewTypeInput.focus();
+  });
+
+  function renderEditNotesList(){
+    var it = data.items.find(function(x){ return x.id === editingItemId; });
+    editNotesList.innerHTML = "";
+    if(!it || !it.notes || it.notes.length === 0){
+      var empty = document.createElement("div");
+      empty.className = "notes-empty";
+      empty.textContent = "No history notes yet.";
+      editNotesList.appendChild(empty);
+      return;
+    }
+    var sorted = it.notes.slice().sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+    sorted.forEach(function(note){
+      var row = document.createElement("div");
+      row.className = "note-row";
+
+      var body = document.createElement("div");
+      body.className = "note-body";
+      var d = document.createElement("div");
+      d.className = "note-date";
+      d.textContent = fmtDate(note.date);
+      body.appendChild(d);
+      var t = document.createElement("div");
+      t.className = "note-text";
+      t.textContent = note.text;
+      body.appendChild(t);
+      row.appendChild(body);
+
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "note-del";
+      del.title = "Delete note";
+      del.textContent = "×";
+      del.addEventListener("click", function(){
+        if(!confirm("Delete this history note?")) return;
+        it.notes = it.notes.filter(function(n){ return n.id !== note.id; });
+        saveData();
+        renderEditNotesList();
+        renderLists();
+      });
+      row.appendChild(del);
+
+      editNotesList.appendChild(row);
+    });
+  }
+
+  addNoteBtn.addEventListener("click", function(){
+    var it = data.items.find(function(x){ return x.id === editingItemId; });
+    if(!it) return;
+    var text = newNoteText.value.trim();
+    if(!text){
+      newNoteText.focus();
+      return;
+    }
+    if(!Array.isArray(it.notes)) it.notes = [];
+    it.notes.push({
+      id: uid(),
+      text: text,
+      date: isoFromLocalInputValue(newNoteDate.value)
+    });
+    saveData();
+    newNoteText.value = "";
+    newNoteDate.value = nowLocalInputValue();
+    renderEditNotesList();
+    renderLists();
+    newNoteText.focus();
+  });
+
+  function openEditPanel(itemId){
+    var it = data.items.find(function(x){ return x.id === itemId; });
+    if(!it) return;
+    if(!Array.isArray(it.notes)) it.notes = [];
+    editingItemId = itemId;
+
+    populateTypeSelect(editTypeSelect, editNewTypeWrap, it.type);
+    editDescription.value = it.description;
+    editComment.value = it.comment || "";
+    editDateInput.value = localInputValueFromIso(it.dateAdded);
+
+    if(it.status === "removed"){
+      editRemovalFields.hidden = false;
+      editDateRemovedInput.value = localInputValueFromIso(it.dateRemoved);
+      editRemovalComment.value = it.removalComment || "";
+    } else {
+      editRemovalFields.hidden = true;
+    }
+
+    newNoteText.value = "";
+    newNoteDate.value = nowLocalInputValue();
+    renderEditNotesList();
+
+    openPanel(editPanel);
+    setTimeout(function(){ editDescription.focus(); }, 220);
+  }
+
+  editForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var it = data.items.find(function(x){ return x.id === editingItemId; });
+    if(!it) return;
+
+    var finalType = resolveTypeFromSelect(editTypeSelect, editNewTypeInput);
+    if(!finalType){
+      editNewTypeInput.focus();
+      return;
+    }
+    var desc = editDescription.value.trim();
+    if(!desc){
+      editDescription.focus();
+      return;
+    }
+    ensureType(finalType);
+
+    it.type = finalType;
+    it.description = desc;
+    it.comment = editComment.value.trim();
+    it.dateAdded = isoFromLocalInputValue(editDateInput.value);
+
+    if(it.status === "removed"){
+      it.dateRemoved = isoFromLocalInputValue(editDateRemovedInput.value);
+      it.removalComment = editRemovalComment.value.trim();
+    }
+
+    saveData();
+    closePanels();
+    editingItemId = null;
+    renderLists();
+  });
+
+  // ---------- Export / Import ----------
+  var btnExport = document.getElementById("btnExport");
+  var btnImport = document.getElementById("btnImport");
+  var importFileInput = document.getElementById("importFileInput");
+
+  function updateIOAvailability(){
+    btnExport.disabled = data.items.length === 0;
+  }
+
+  function buildExportText(){
+    var now = new Date();
+    var activeCount = data.items.filter(function(it){ return it.status === "active"; }).length;
+    var removedCount = data.items.filter(function(it){ return it.status === "removed"; }).length;
+    var lines = [];
+    lines.push("# Stockroom Inventory Export");
+    lines.push("# Exported: " + now.toISOString());
+    lines.push("# Current items: " + activeCount + " | Removed items: " + removedCount);
+    lines.push("# ---");
+    lines.push("# Each item below is a block of labeled fields, separated by a blank line.");
+    lines.push("# Optional NOTE lines (format: NOTE: <date> | <text>) capture history notes.");
+    lines.push("# This file can be re-imported into Stockroom — imported items are added");
+    lines.push("# to whatever is already there, nothing gets overwritten.");
+    lines.push("# ---");
+    lines.push("");
+    data.items.forEach(function(it){
+      lines.push("TYPE: " + escapeField(it.type));
+      lines.push("DESCRIPTION: " + escapeField(it.description));
+      lines.push("COMMENT: " + escapeField(it.comment));
+      lines.push("DATE_ADDED: " + it.dateAdded);
+      lines.push("STATUS: " + it.status);
+      if(it.status === "removed"){
+        lines.push("DATE_REMOVED: " + (it.dateRemoved || ""));
+        lines.push("REMOVAL_COMMENT: " + escapeField(it.removalComment));
+      }
+      (it.notes || []).slice().sort(function(a,b){ return new Date(a.date) - new Date(b.date); }).forEach(function(note){
+        lines.push("NOTE: " + note.date + " | " + escapeField(note.text));
+      });
+      lines.push("");
+    });
+    return lines.join("\n");
+  }
+
+  function exportData(){
+    if(data.items.length === 0){
+      alert("There's no inventory data yet to export.");
+      return;
+    }
+    var text = buildExportText();
+    var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, "-");
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "stockroom-inventory-" + stamp + ".txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function parseImportText(text){
+    var rawLines = text.split(/\r\n|\r|\n/);
+    var blocks = [];
+    var current = [];
+    rawLines.forEach(function(line){
+      if(line.trim() === ""){
+        if(current.length){ blocks.push(current); current = []; }
+        return;
+      }
+      if(/^\s*#/.test(line)) return; // skip comment/header lines
+      current.push(line);
+    });
+    if(current.length) blocks.push(current);
+
+    var imported = [];
+    var skipped = 0;
+
+    blocks.forEach(function(blockLines){
+      var fields = {};
+      var noteLines = [];
+      blockLines.forEach(function(line){
+        var idx = line.indexOf(":");
+        if(idx === -1) return;
+        var key = line.slice(0, idx).trim().toUpperCase();
+        var val = line.slice(idx + 1).trim();
+        if(key === "NOTE"){
+          noteLines.push(val);
+        } else {
+          fields[key] = val;
+        }
+      });
+
+      var type = fields.TYPE ? unescapeField(fields.TYPE).trim() : "";
+      var description = fields.DESCRIPTION ? unescapeField(fields.DESCRIPTION).trim() : "";
+      if(!type || !description){
+        if(Object.keys(fields).length || noteLines.length) skipped++;
+        return;
+      }
+
+      var status = (fields.STATUS || "active").toLowerCase() === "removed" ? "removed" : "active";
+      var dateAddedParsed = fields.DATE_ADDED ? new Date(fields.DATE_ADDED) : null;
+      var dateAdded = (dateAddedParsed && !isNaN(dateAddedParsed.getTime()))
+        ? dateAddedParsed.toISOString() : new Date().toISOString();
+
+      var item = {
+        id: uid(),
+        type: type,
+        description: description,
+        comment: fields.COMMENT ? unescapeField(fields.COMMENT) : "",
+        status: status,
+        dateAdded: dateAdded,
+        dateRemoved: null,
+        removalComment: "",
+        notes: []
+      };
+
+      if(status === "removed"){
+        var dateRemovedParsed = fields.DATE_REMOVED ? new Date(fields.DATE_REMOVED) : null;
+        item.dateRemoved = (dateRemovedParsed && !isNaN(dateRemovedParsed.getTime()))
+          ? dateRemovedParsed.toISOString() : dateAdded;
+        item.removalComment = fields.REMOVAL_COMMENT ? unescapeField(fields.REMOVAL_COMMENT) : "";
+      }
+
+      noteLines.forEach(function(val){
+        var delim = " | ";
+        var dIdx = val.indexOf(delim);
+        if(dIdx === -1) return;
+        var datePart = val.slice(0, dIdx).trim();
+        var textPart = unescapeField(val.slice(dIdx + delim.length));
+        if(!textPart) return;
+        var noteDateParsed = new Date(datePart);
+        var noteDate = !isNaN(noteDateParsed.getTime()) ? noteDateParsed.toISOString() : dateAdded;
+        item.notes.push({ id: uid(), date: noteDate, text: textPart });
+      });
+
+      imported.push(item);
+    });
+
+    return { imported: imported, skipped: skipped };
+  }
+
+  function importFromText(text){
+    var result;
+    try{
+      result = parseImportText(text);
+    }catch(e){
+      console.error("Failed to parse import file:", e);
+      alert("That file couldn't be read as a Stockroom export. No data was imported.");
+      return;
+    }
+    if(result.imported.length === 0){
+      alert("No valid items were found in that file. Nothing was imported.");
+      return;
+    }
+    var newTypes = 0;
+    result.imported.forEach(function(it){
+      var existed = data.types.some(function(t){ return t.toLowerCase() === it.type.toLowerCase(); });
+      if(!existed) newTypes++;
+      ensureType(it.type);
+      data.items.push(it);
+    });
+    saveData();
+    renderLists();
+
+    var msg = "Imported " + result.imported.length + " item" + (result.imported.length === 1 ? "" : "s") +
+      " — added to your existing inventory";
+    if(newTypes) msg += " (" + newTypes + " new type" + (newTypes === 1 ? "" : "s") + " added)";
+    if(result.skipped) msg += ". Skipped " + result.skipped + " unreadable entr" + (result.skipped === 1 ? "y" : "ies");
+    alert(msg + ".");
+  }
+
+  btnExport.addEventListener("click", exportData);
+  btnImport.addEventListener("click", function(){ importFileInput.click(); });
+  importFileInput.addEventListener("change", function(){
+    var file = importFileInput.files && importFileInput.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      importFromText(String(e.target.result || ""));
+    };
+    reader.onerror = function(){
+      alert("Could not read that file. Please try again.");
+    };
+    reader.readAsText(file);
+    importFileInput.value = "";
+  });
+
+  // ---------- Small utility ----------
+  function setActiveTab(tabName){
+    activeTab = tabName;
+    document.querySelectorAll(".tab").forEach(function(t){
+      t.classList.toggle("active", t.getAttribute("data-tab") === tabName);
+    });
+  }
+
+  // ---------- Init ----------
+  renderLists();
+})();
+</script>
+</body>
+</html>
