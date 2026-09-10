@@ -67,6 +67,12 @@
   }
   .btn-ghost:hover:not(:disabled){color:var(--text);border-color:var(--text-faint);}
   .btn-ghost:disabled{opacity:0.4;cursor:not-allowed;}
+  .lang-select{
+    background:var(--surface);border:1px solid var(--border);color:var(--text-dim);
+    font-family:var(--sans);font-size:12.5px;font-weight:600;
+    padding:7px 10px;border-radius:8px;cursor:pointer;outline:none;
+  }
+  .lang-select:focus{border-color:var(--accent);}
 
   /* ---------- Toolbar ---------- */
   .toolbar{
@@ -312,10 +318,15 @@
   <header class="topbar">
     <div class="brand"><span class="brand-mark">▣</span> FlyStock</div>
     <div class="topbar-right">
-      <div class="stats">CURRENT&nbsp;<b id="statCurrent">0</b> &nbsp;·&nbsp; REMOVED&nbsp;<b id="statRemoved">0</b></div>
+      <div class="stats"><span data-i18n="statCurrentLabel">CURRENT</span>&nbsp;<b id="statCurrent">0</b> &nbsp;·&nbsp; <span data-i18n="statRemovedLabel">REMOVED</span>&nbsp;<b id="statRemoved">0</b></div>
+      <select class="lang-select" id="langSelect" data-i18n-aria-label="langSelectorAriaLabel" aria-label="Language">
+        <option value="en">English</option>
+        <option value="uk">Українська</option>
+        <option value="pt-BR">Português (BR)</option>
+      </select>
       <div class="io-actions">
-        <button class="btn-ghost" id="btnExport" type="button" title="Download all inventory data as a text file">Export</button>
-        <button class="btn-ghost" id="btnImport" type="button" title="Add items from a previously exported text file">Import</button>
+        <button class="btn-ghost" id="btnExport" type="button" title="Download all inventory data as a text file" data-i18n-title="btnExportTitle" data-i18n="exportBtn">Export</button>
+        <button class="btn-ghost" id="btnImport" type="button" title="Add items from a previously exported text file" data-i18n-title="btnImportTitle" data-i18n="importBtn">Import</button>
         <input type="file" id="importFileInput" accept=".txt,text/plain" hidden>
       </div>
     </div>
@@ -323,18 +334,18 @@
 
   <div class="toolbar">
     <div class="search-wrap">
-      <input id="searchInput" type="text" placeholder="Search type, description, or notes…" autocomplete="off">
-      <button class="clear-search" id="clearSearch" title="Clear search">×</button>
+      <input id="searchInput" type="text" placeholder="Search type, description, or notes…" autocomplete="off" data-i18n-placeholder="searchPlaceholder">
+      <button class="clear-search" id="clearSearch" title="Clear search" data-i18n-title="clearSearchTitle">×</button>
     </div>
     <div class="actions">
-      <button class="btn btn-add" id="btnAdd">+ Add Item</button>
-      <button class="btn btn-remove" id="btnRemove">− Remove Item</button>
+      <button class="btn btn-add" id="btnAdd" data-i18n="btnAddItem">+ Add Item</button>
+      <button class="btn btn-remove" id="btnRemove" data-i18n="btnRemoveItem">− Remove Item</button>
     </div>
   </div>
 
   <nav class="tabs">
-    <button class="tab active" data-tab="current">Current Inventory <span class="count" id="tabCurrentCount"></span></button>
-    <button class="tab" data-tab="removed">Removed Items <span class="count" id="tabRemovedCount"></span></button>
+    <button class="tab active" data-tab="current"><span data-i18n="tabCurrentInventory">Current Inventory</span> <span class="count" id="tabCurrentCount"></span></button>
+    <button class="tab" data-tab="removed"><span data-i18n="tabRemovedItems">Removed Items</span> <span class="count" id="tabRemovedCount"></span></button>
   </nav>
 
   <main>
@@ -343,23 +354,23 @@
     <div id="emptyState" class="empty hidden"><h3></h3><p></p></div>
   </main>
 
-  <p class="footer-note">Data is stored only in this browser (localStorage) — nothing is sent anywhere. Clearing your browser data will remove it. Export regularly for backup.</p>
+  <p class="footer-note" data-i18n="footerNote">Data is stored only in this browser (localStorage) — nothing is sent anywhere. Clearing your browser data will remove it. Export regularly for backup.</p>
   <div class="install-prompt hidden" id="installPrompt" role="dialog" aria-labelledby="installPromptTitle">
     <div class="install-prompt-card">
-      <div><h2 id="installPromptTitle">Install FlyStock</h2><p>Install FlyStock for quick access and offline use. Your inventory stays on this device.</p></div>
-      <div class="install-prompt-actions"><button class="btn-submit" id="btnInstallApp" type="button">Install</button><button class="btn-ghost" id="btnDismissInstall" type="button">Later</button></div>
+      <div><h2 id="installPromptTitle" data-i18n="installTitle">Install FlyStock</h2><p data-i18n="installDesc">Install FlyStock for quick access and offline use. Your inventory stays on this device.</p></div>
+      <div class="install-prompt-actions"><button class="btn-submit" id="btnInstallApp" type="button" data-i18n="installBtn">Install</button><button class="btn-ghost" id="btnDismissInstall" type="button" data-i18n="installLater">Later</button></div>
     </div>
   </div>
 
   <div class="storage-error hidden" id="storageError" role="alertdialog" aria-modal="true" aria-labelledby="storageErrorTitle">
     <div class="storage-error-card">
-      <h2 id="storageErrorTitle">Inventory storage could not be read</h2>
-      <p>Your saved inventory data appears to be unavailable or corrupted. FlyStock has not overwritten it.</p>
+      <h2 id="storageErrorTitle" data-i18n="storageErrorTitle">Inventory storage could not be read</h2>
+      <p data-i18n="storageErrorDesc">Your saved inventory data appears to be unavailable or corrupted. FlyStock has not overwritten it.</p>
       <div class="storage-error-actions">
-        <button class="btn-ghost" id="btnDownloadStorage" type="button">Download Storage Data</button>
-        <button class="btn-ghost danger-outline" id="btnResetInventory" type="button">Reset Inventory</button>
+        <button class="btn-ghost" id="btnDownloadStorage" type="button" data-i18n="btnDownloadStorage">Download Storage Data</button>
+        <button class="btn-ghost danger-outline" id="btnResetInventory" type="button" data-i18n="btnResetInventory">Reset Inventory</button>
       </div>
-      <p class="storage-error-warning">Resetting will permanently replace the unreadable inventory with an empty inventory. Download the storage data first if you want to keep a copy.</p>
+      <p class="storage-error-warning" data-i18n="storageErrorWarning">Resetting will permanently replace the unreadable inventory with an empty inventory. Download the storage data first if you want to keep a copy.</p>
     </div>
   </div>
 </div>
@@ -367,138 +378,138 @@
 <div class="overlay hidden" id="overlay"></div>
 
 <!-- Add panel -->
-<aside class="panel hidden" id="addPanel" aria-label="Add item">
-  <div class="panel-head"><h2>Add Item</h2><button class="panel-close" data-close="add" aria-label="Close">×</button></div>
+<aside class="panel hidden" id="addPanel" aria-label="Add item" data-i18n-aria-label="addPanelAriaLabel">
+  <div class="panel-head"><h2 data-i18n="addPanelTitle">Add Item</h2><button class="panel-close" data-close="add" aria-label="Close" data-i18n-aria-label="closeAriaLabel">×</button></div>
   <form id="addForm">
     <div class="session-flash" id="addSessionFlash" hidden></div>
     <div class="field">
-      <label for="addTypeSelect">Item Type</label>
+      <label for="addTypeSelect" data-i18n="itemTypeLabel">Item Type</label>
       <select id="addTypeSelect"></select>
     </div>
     <div class="field" id="addNewTypeWrap" hidden>
-      <label for="addNewTypeInput">New Type Name</label>
-      <input id="addNewTypeInput" type="text" placeholder="e.g. Power Tools">
+      <label for="addNewTypeInput" data-i18n="newTypeNameLabel">New Type Name</label>
+      <input id="addNewTypeInput" type="text" placeholder="e.g. Power Tools" data-i18n-placeholder="newTypePlaceholder">
     </div>
     <div class="field">
-      <label for="addDescription">Description</label>
-      <input id="addDescription" type="text" placeholder="e.g. DeWalt 20V cordless drill, serial #4471" required>
+      <label for="addDescription" data-i18n="descriptionLabel">Description</label>
+      <input id="addDescription" type="text" placeholder="e.g. DeWalt 20V cordless drill, serial #4471" required data-i18n-placeholder="addDescriptionPlaceholder">
     </div>
     <div class="field">
-      <label for="addComment">Note</label>
-      <textarea id="addComment" placeholder="Optional note — condition, location, source…"></textarea>
+      <label for="addComment" data-i18n="noteLabel">Note</label>
+      <textarea id="addComment" placeholder="Optional note — condition, location, source…" data-i18n-placeholder="addNotePlaceholder"></textarea>
     </div>
     <div class="field">
-      <label for="addDateInput">Date &amp; Time Added</label>
+      <label for="addDateInput" data-i18n="dateAddedLabel">Date &amp; Time Added</label>
       <div class="date-row">
         <input id="addDateInput" type="datetime-local" required>
-        <button type="button" class="reset-now-btn" data-reset="addDateInput">Reset to now</button>
+        <button type="button" class="reset-now-btn" data-reset="addDateInput" data-i18n="resetToNow">Reset to now</button>
       </div>
     </div>
-    <button type="submit" class="btn-submit">Add to Inventory</button>
+    <button type="submit" class="btn-submit" data-i18n="addSubmitBtn">Add to Inventory</button>
   </form>
 </aside>
 
 <!-- Remove panel -->
-<aside class="panel hidden" id="removePanel" aria-label="Remove item">
-  <div class="panel-head"><h2>Remove Item</h2><button class="panel-close" data-close="remove" aria-label="Close">×</button></div>
+<aside class="panel hidden" id="removePanel" aria-label="Remove item" data-i18n-aria-label="removePanelAriaLabel">
+  <div class="panel-head"><h2 data-i18n="removePanelTitle">Remove Item</h2><button class="panel-close" data-close="remove" aria-label="Close" data-i18n-aria-label="closeAriaLabel">×</button></div>
   <form id="removeForm">
     <div class="session-flash" id="removeSessionFlash" hidden></div>
     <div class="field">
-      <label for="removeTypeSelect">Item Type</label>
+      <label for="removeTypeSelect" data-i18n="itemTypeLabel">Item Type</label>
       <select id="removeTypeSelect"></select>
     </div>
     <div class="field">
-      <label for="removeItemSelect">Item</label>
+      <label for="removeItemSelect" data-i18n="itemLabel">Item</label>
       <select id="removeItemSelect"></select>
     </div>
     <div class="preview" id="removePreview">Select an item to see its details.</div>
     <div class="field">
-      <label for="removeDateInput">Date &amp; Time Removed</label>
+      <label for="removeDateInput" data-i18n="dateRemovedLabel">Date &amp; Time Removed</label>
       <div class="date-row">
         <input id="removeDateInput" type="datetime-local" required>
-        <button type="button" class="reset-now-btn" data-reset="removeDateInput">Reset to now</button>
+        <button type="button" class="reset-now-btn" data-reset="removeDateInput" data-i18n="resetToNow">Reset to now</button>
       </div>
     </div>
     <div class="field">
-      <label for="removeComment">Removal Note</label>
-      <textarea id="removeComment" placeholder="Optional note — reason for removal, destination, etc."></textarea>
+      <label for="removeComment" data-i18n="removalNoteLabel">Removal Note</label>
+      <textarea id="removeComment" placeholder="Optional note — reason for removal, destination, etc." data-i18n-placeholder="removeNotePlaceholder"></textarea>
     </div>
-    <button type="submit" class="btn-submit danger" id="removeSubmitBtn">Remove from Inventory</button>
+    <button type="submit" class="btn-submit danger" id="removeSubmitBtn" data-i18n="removeSubmitBtn">Remove from Inventory</button>
   </form>
 </aside>
 
 <!-- Edit panel -->
-<aside class="panel hidden" id="editPanel" aria-label="Edit item">
-  <div class="panel-head"><h2>Edit Item</h2><button class="panel-close" data-close="edit" aria-label="Close">×</button></div>
+<aside class="panel hidden" id="editPanel" aria-label="Edit item" data-i18n-aria-label="editPanelAriaLabel">
+  <div class="panel-head"><h2 data-i18n="editPanelTitle">Edit Item</h2><button class="panel-close" data-close="edit" aria-label="Close" data-i18n-aria-label="closeAriaLabel">×</button></div>
   <form id="editForm">
     <div class="field">
-      <label for="editTypeSelect">Item Type</label>
+      <label for="editTypeSelect" data-i18n="itemTypeLabel">Item Type</label>
       <select id="editTypeSelect"></select>
     </div>
     <div class="field" id="editNewTypeWrap" hidden>
-      <label for="editNewTypeInput">New Type Name</label>
-      <input id="editNewTypeInput" type="text" placeholder="e.g. Power Tools">
+      <label for="editNewTypeInput" data-i18n="newTypeNameLabel">New Type Name</label>
+      <input id="editNewTypeInput" type="text" placeholder="e.g. Power Tools" data-i18n-placeholder="newTypePlaceholder">
     </div>
     <div class="field">
-      <label for="editDescription">Description</label>
+      <label for="editDescription" data-i18n="descriptionLabel">Description</label>
       <input id="editDescription" type="text" required>
     </div>
     <div class="field">
-      <label for="editComment">Note</label>
+      <label for="editComment" data-i18n="noteLabel">Note</label>
       <textarea id="editComment"></textarea>
     </div>
     <div class="field">
-      <label for="editDateInput">Date &amp; Time Added</label>
+      <label for="editDateInput" data-i18n="dateAddedLabel">Date &amp; Time Added</label>
       <div class="date-row">
         <input id="editDateInput" type="datetime-local" required>
-        <button type="button" class="reset-now-btn" data-reset="editDateInput">Reset to now</button>
+        <button type="button" class="reset-now-btn" data-reset="editDateInput" data-i18n="resetToNow">Reset to now</button>
       </div>
     </div>
     <div id="editRemovalFields" hidden>
       <div class="field">
-        <label for="editDateRemovedInput">Date &amp; Time Removed</label>
+        <label for="editDateRemovedInput" data-i18n="dateRemovedLabel">Date &amp; Time Removed</label>
         <div class="date-row">
           <input id="editDateRemovedInput" type="datetime-local">
-          <button type="button" class="reset-now-btn" data-reset="editDateRemovedInput">Reset to now</button>
+          <button type="button" class="reset-now-btn" data-reset="editDateRemovedInput" data-i18n="resetToNow">Reset to now</button>
         </div>
       </div>
     </div>
     <div class="field">
-      <label>History Notes</label>
+      <label data-i18n="historyNotesLabel">History Notes</label>
       <div class="notes-list" id="editNotesList"></div>
     </div>
     <div class="field">
-      <label for="newNoteText">Add a Note</label>
+      <label for="newNoteText" data-i18n="addNoteLabel">Add a Note</label>
       <div class="note-add-row">
-        <textarea id="newNoteText" placeholder="What happened? e.g. Sent out for repair…" rows="2"></textarea>
+        <textarea id="newNoteText" placeholder="What happened? e.g. Sent out for repair…" rows="2" data-i18n-placeholder="newNoteTextPlaceholder"></textarea>
         <div class="date-row">
           <input id="newNoteDate" type="datetime-local">
-          <button type="button" class="reset-now-btn" data-reset="newNoteDate">Reset to now</button>
+          <button type="button" class="reset-now-btn" data-reset="newNoteDate" data-i18n="resetToNow">Reset to now</button>
         </div>
-        <button type="button" class="btn-add-note" id="addNoteBtn">+ Add Note</button>
+        <button type="button" class="btn-add-note" id="addNoteBtn" data-i18n="addNoteBtn">+ Add Note</button>
       </div>
     </div>
-    <button type="submit" class="btn-submit">Save Changes</button>
+    <button type="submit" class="btn-submit" data-i18n="saveChangesBtn">Save Changes</button>
   </form>
 </aside>
 
 <!-- Restore panel -->
-<aside class="panel hidden" id="restorePanel" aria-label="Restore item">
-  <div class="panel-head"><h2>Restore Item</h2><button class="panel-close" data-close="restore" aria-label="Close">×</button></div>
+<aside class="panel hidden" id="restorePanel" aria-label="Restore item" data-i18n-aria-label="restorePanelAriaLabel">
+  <div class="panel-head"><h2 data-i18n="restorePanelTitle">Restore Item</h2><button class="panel-close" data-close="restore" aria-label="Close" data-i18n-aria-label="closeAriaLabel">×</button></div>
   <form id="restoreForm">
     <div class="preview" id="restorePreview">Select an item to restore.</div>
     <div class="field">
-      <label for="restoreDateInput">Date &amp; Time Restored</label>
+      <label for="restoreDateInput" data-i18n="dateRestoredLabel">Date &amp; Time Restored</label>
       <div class="date-row">
         <input id="restoreDateInput" type="datetime-local" required>
-        <button type="button" class="reset-now-btn" data-reset="restoreDateInput">Reset to now</button>
+        <button type="button" class="reset-now-btn" data-reset="restoreDateInput" data-i18n="resetToNow">Reset to now</button>
       </div>
     </div>
     <div class="field">
-      <label for="restoreNote">Restore Note</label>
-      <textarea id="restoreNote" placeholder="Optional — where it went back, why, condition, etc."></textarea>
+      <label for="restoreNote" data-i18n="restoreNoteLabel">Restore Note</label>
+      <textarea id="restoreNote" placeholder="Optional — where it went back, why, condition, etc." data-i18n-placeholder="restoreNotePlaceholder"></textarea>
     </div>
-    <button type="submit" class="btn-submit">Restore to Inventory</button>
+    <button type="submit" class="btn-submit" data-i18n="restoreSubmitBtn">Restore to Inventory</button>
   </form>
 </aside>
 
@@ -508,6 +519,428 @@
 
   var STORAGE_KEY = "stockroom_inventory_v1";
   var TAG_COLORS = ["#E8A33D","#7FB069","#5B8DBE","#C1554B","#9B7EDE","#4FB0A5","#D9825F","#8A93A6"];
+
+  // ================= i18n =================
+  // Language preference lives under its own storage key, entirely separate from
+  // STORAGE_KEY above, so switching languages never touches saved inventory data.
+  var LANG_KEY = "flystock-lang";
+
+  var translations = {
+    en: {
+      statCurrentLabel: "CURRENT",
+      statRemovedLabel: "REMOVED",
+      langSelectorAriaLabel: "Language",
+      btnExportTitle: "Download all inventory data as a text file",
+      exportBtn: "Export",
+      btnImportTitle: "Add items from a previously exported text file",
+      importBtn: "Import",
+      searchPlaceholder: "Search type, description, or notes…",
+      clearSearchTitle: "Clear search",
+      btnAddItem: "+ Add Item",
+      btnRemoveItem: "− Remove Item",
+      tabCurrentInventory: "Current Inventory",
+      tabRemovedItems: "Removed Items",
+      footerNote: "Data is stored only in this browser (localStorage) — nothing is sent anywhere. Clearing your browser data will remove it. Export regularly for backup.",
+      installTitle: "Install FlyStock",
+      installDesc: "Install FlyStock for quick access and offline use. Your inventory stays on this device.",
+      installBtn: "Install",
+      installLater: "Later",
+      storageErrorTitle: "Inventory storage could not be read",
+      storageErrorDesc: "Your saved inventory data appears to be unavailable or corrupted. FlyStock has not overwritten it.",
+      btnDownloadStorage: "Download Storage Data",
+      btnResetInventory: "Reset Inventory",
+      storageErrorWarning: "Resetting will permanently replace the unreadable inventory with an empty inventory. Download the storage data first if you want to keep a copy.",
+      addPanelAriaLabel: "Add item",
+      addPanelTitle: "Add Item",
+      closeAriaLabel: "Close",
+      itemTypeLabel: "Item Type",
+      newTypeNameLabel: "New Type Name",
+      newTypePlaceholder: "e.g. Power Tools",
+      descriptionLabel: "Description",
+      addDescriptionPlaceholder: "e.g. DeWalt 20V cordless drill, serial #4471",
+      noteLabel: "Note",
+      addNotePlaceholder: "Optional note — condition, location, source…",
+      dateAddedLabel: "Date & Time Added",
+      resetToNow: "Reset to now",
+      addSubmitBtn: "Add to Inventory",
+      removePanelAriaLabel: "Remove item",
+      removePanelTitle: "Remove Item",
+      itemLabel: "Item",
+      dateRemovedLabel: "Date & Time Removed",
+      removalNoteLabel: "Removal Note",
+      removeNotePlaceholder: "Optional note — reason for removal, destination, etc.",
+      removeSubmitBtn: "Remove from Inventory",
+      editPanelAriaLabel: "Edit item",
+      editPanelTitle: "Edit Item",
+      historyNotesLabel: "History Notes",
+      addNoteLabel: "Add a Note",
+      newNoteTextPlaceholder: "What happened? e.g. Sent out for repair…",
+      addNoteBtn: "+ Add Note",
+      saveChangesBtn: "Save Changes",
+      restorePanelAriaLabel: "Restore item",
+      restorePanelTitle: "Restore Item",
+      dateRestoredLabel: "Date & Time Restored",
+      restoreNoteLabel: "Restore Note",
+      restoreNotePlaceholder: "Optional — where it went back, why, condition, etc.",
+      restoreSubmitBtn: "Restore to Inventory",
+
+      addNewTypeOption: "+ Add new type…",
+      noteLabelPrefix: "Note: ",
+      addedDatePrefix: "Added ",
+      historyNoteCount_one: "{n} history note",
+      historyNoteCount_other: "{n} history notes",
+      removedLabelPrefix: "REMOVED ",
+      restoreBtnLabel: "Restore",
+      editBtnLabel: "Edit",
+      removeBtnLabel: "Remove",
+      noMatchesTitle: "No matches",
+      noMatchesCurrentDesc: "No current inventory match “{query}”.",
+      noMatchesRemovedDesc: "No removed items match “{query}”.",
+      noInventoryTitle: "No inventory yet",
+      noInventoryDesc: "Add your first item to get started.",
+      nothingRemovedTitle: "Nothing removed yet",
+      nothingRemovedDesc: "Items you take out of inventory will show up here.",
+      saveFailedAlert: "Could not save your changes. Your browser storage may be full or unavailable.",
+      resetConfirm: "Reset inventory? This will replace the unreadable saved data with an empty inventory and cannot be undone.",
+      resetDoneAlert: "Inventory has been reset.",
+      resetFailedAlert: "Could not reset inventory. Browser storage is unavailable.",
+      addFlash_one: "✓ Added “{desc}” — {n} item added this session.",
+      addFlash_other: "✓ Added “{desc}” — {n} items added this session.",
+      removeFlash_one: "✓ Removed “{desc}” — {n} item removed this session.",
+      removeFlash_other: "✓ Removed “{desc}” — {n} items removed this session.",
+      lastItemRemovedAlert: "That was the last item — inventory is now empty. Nothing left to remove.",
+      removeDisabledTitle: "No items in inventory to remove",
+      noItemSelectedPreview: "No item selected.",
+      previewTypeAdded: "Type: {type} · Added {date}",
+      previewNote: "Note: {text}",
+      previewTypeRemoved: "Type: {type} · Removed {date}",
+      previewLatestNote: "Latest note: {text}",
+      deleteNoteTitle: "Delete note",
+      deleteNoteConfirm: "Delete this history note?",
+      noHistoryNotesYet: "No history notes yet.",
+      exportEmptyAlert: "There's no inventory data yet to export.",
+      importParseFailedAlert: "That file couldn't be read as a FlyStock export. No data was imported.",
+      importNoValidAlert: "No valid items were found in that file. Nothing was imported.",
+      importedCount_one: "Imported {n} item — added to your existing inventory",
+      importedCount_other: "Imported {n} items — added to your existing inventory",
+      newTypesAdded_one: " ({n} new type added)",
+      newTypesAdded_other: " ({n} new types added)",
+      skippedEntries_one: ". Skipped {n} unreadable entry",
+      skippedEntries_other: ". Skipped {n} unreadable entries",
+      importReadFailedAlert: "Could not read that file. Please try again."
+    },
+    uk: {
+      statCurrentLabel: "ПОТОЧНІ",
+      statRemovedLabel: "ВИЛУЧЕНІ",
+      langSelectorAriaLabel: "Мова",
+      btnExportTitle: "Завантажити всі дані інвентарю як текстовий файл",
+      exportBtn: "Експорт",
+      btnImportTitle: "Додати елементи з раніше експортованого текстового файлу",
+      importBtn: "Імпорт",
+      searchPlaceholder: "Пошук за типом, описом або нотатками…",
+      clearSearchTitle: "Очистити пошук",
+      btnAddItem: "+ Додати елемент",
+      btnRemoveItem: "− Вилучити елемент",
+      tabCurrentInventory: "Поточний інвентар",
+      tabRemovedItems: "Вилучені елементи",
+      footerNote: "Дані зберігаються лише у цьому браузері (localStorage) — нікуди не надсилаються. Очищення даних браузера видалить їх. Регулярно робіть експорт для резервної копії.",
+      installTitle: "Встановити FlyStock",
+      installDesc: "Встановіть FlyStock для швидкого доступу та роботи офлайн. Ваш інвентар залишається на цьому пристрої.",
+      installBtn: "Встановити",
+      installLater: "Пізніше",
+      storageErrorTitle: "Не вдалося прочитати сховище інвентарю",
+      storageErrorDesc: "Ваші збережені дані інвентарю недоступні або пошкоджені. FlyStock не перезаписав їх.",
+      btnDownloadStorage: "Завантажити дані сховища",
+      btnResetInventory: "Скинути інвентар",
+      storageErrorWarning: "Скидання остаточно замінить непридатний для читання інвентар на порожній. Спершу завантажте дані сховища, якщо хочете зберегти копію.",
+      addPanelAriaLabel: "Додати елемент",
+      addPanelTitle: "Додати елемент",
+      closeAriaLabel: "Закрити",
+      itemTypeLabel: "Тип елемента",
+      newTypeNameLabel: "Назва нового типу",
+      newTypePlaceholder: "напр., Електроінструменти",
+      descriptionLabel: "Опис",
+      addDescriptionPlaceholder: "напр., Акумуляторний дриль DeWalt 20V, серійний №4471",
+      noteLabel: "Нотатка",
+      addNotePlaceholder: "Необов'язкова нотатка — стан, місце, джерело…",
+      dateAddedLabel: "Дата й час додавання",
+      resetToNow: "Скинути на зараз",
+      addSubmitBtn: "Додати до інвентарю",
+      removePanelAriaLabel: "Вилучити елемент",
+      removePanelTitle: "Вилучити елемент",
+      itemLabel: "Елемент",
+      dateRemovedLabel: "Дата й час вилучення",
+      removalNoteLabel: "Нотатка про вилучення",
+      removeNotePlaceholder: "Необов'язкова нотатка — причина вилучення, призначення тощо.",
+      removeSubmitBtn: "Вилучити з інвентарю",
+      editPanelAriaLabel: "Редагувати елемент",
+      editPanelTitle: "Редагувати елемент",
+      historyNotesLabel: "Історія нотаток",
+      addNoteLabel: "Додати нотатку",
+      newNoteTextPlaceholder: "Що сталося? напр., Відправлено в ремонт…",
+      addNoteBtn: "+ Додати нотатку",
+      saveChangesBtn: "Зберегти зміни",
+      restorePanelAriaLabel: "Відновити елемент",
+      restorePanelTitle: "Відновити елемент",
+      dateRestoredLabel: "Дата й час відновлення",
+      restoreNoteLabel: "Нотатка про відновлення",
+      restoreNotePlaceholder: "Необов'язково — куди повернувся, чому, стан тощо.",
+      restoreSubmitBtn: "Відновити в інвентарі",
+
+      addNewTypeOption: "+ Додати новий тип…",
+      noteLabelPrefix: "Нотатка: ",
+      addedDatePrefix: "Додано ",
+      historyNoteCount_one: "{n} нотатка історії",
+      historyNoteCount_few: "{n} нотатки історії",
+      historyNoteCount_many: "{n} нотаток історії",
+      historyNoteCount_other: "{n} нотаток історії",
+      removedLabelPrefix: "ВИЛУЧЕНО ",
+      restoreBtnLabel: "Відновити",
+      editBtnLabel: "Редагувати",
+      removeBtnLabel: "Вилучити",
+      noMatchesTitle: "Збігів немає",
+      noMatchesCurrentDesc: "Жоден елемент поточного інвентарю не відповідає «{query}».",
+      noMatchesRemovedDesc: "Жоден вилучений елемент не відповідає «{query}».",
+      noInventoryTitle: "Поки немає інвентарю",
+      noInventoryDesc: "Додайте свій перший елемент, щоб почати.",
+      nothingRemovedTitle: "Поки нічого не вилучено",
+      nothingRemovedDesc: "Елементи, які ви вилучите з інвентарю, з'являться тут.",
+      saveFailedAlert: "Не вдалося зберегти зміни. Сховище браузера може бути заповнене або недоступне.",
+      resetConfirm: "Скинути інвентар? Це замінить непридатні збережені дані порожнім інвентарем, і цю дію неможливо скасувати.",
+      resetDoneAlert: "Інвентар скинуто.",
+      resetFailedAlert: "Не вдалося скинути інвентар. Сховище браузера недоступне.",
+      addFlash_one: "✓ Додано «{desc}» — {n} елемент додано за цей сеанс.",
+      addFlash_few: "✓ Додано «{desc}» — {n} елементи додано за цей сеанс.",
+      addFlash_many: "✓ Додано «{desc}» — {n} елементів додано за цей сеанс.",
+      addFlash_other: "✓ Додано «{desc}» — {n} елементів додано за цей сеанс.",
+      removeFlash_one: "✓ Вилучено «{desc}» — {n} елемент вилучено за цей сеанс.",
+      removeFlash_few: "✓ Вилучено «{desc}» — {n} елементи вилучено за цей сеанс.",
+      removeFlash_many: "✓ Вилучено «{desc}» — {n} елементів вилучено за цей сеанс.",
+      removeFlash_other: "✓ Вилучено «{desc}» — {n} елементів вилучено за цей сеанс.",
+      lastItemRemovedAlert: "Це був останній елемент — інвентар тепер порожній. Нічого вилучати.",
+      removeDisabledTitle: "Немає елементів в інвентарі для вилучення",
+      noItemSelectedPreview: "Елемент не вибрано.",
+      previewTypeAdded: "Тип: {type} · Додано {date}",
+      previewNote: "Нотатка: {text}",
+      previewTypeRemoved: "Тип: {type} · Вилучено {date}",
+      previewLatestNote: "Остання нотатка: {text}",
+      deleteNoteTitle: "Видалити нотатку",
+      deleteNoteConfirm: "Видалити цю нотатку історії?",
+      noHistoryNotesYet: "Поки немає нотаток історії.",
+      exportEmptyAlert: "Поки немає даних інвентарю для експорту.",
+      importParseFailedAlert: "Не вдалося прочитати файл як експорт FlyStock. Дані не імпортовано.",
+      importNoValidAlert: "У файлі не знайдено дійсних елементів. Нічого не імпортовано.",
+      importedCount_one: "Імпортовано {n} елемент — додано до вашого наявного інвентарю",
+      importedCount_few: "Імпортовано {n} елементи — додано до вашого наявного інвентарю",
+      importedCount_many: "Імпортовано {n} елементів — додано до вашого наявного інвентарю",
+      importedCount_other: "Імпортовано {n} елементів — додано до вашого наявного інвентарю",
+      newTypesAdded_one: " ({n} новий тип додано)",
+      newTypesAdded_few: " ({n} нових типи додано)",
+      newTypesAdded_many: " ({n} нових типів додано)",
+      newTypesAdded_other: " ({n} нових типів додано)",
+      skippedEntries_one: ". Пропущено {n} нечитабельний запис",
+      skippedEntries_few: ". Пропущено {n} нечитабельні записи",
+      skippedEntries_many: ". Пропущено {n} нечитабельних записів",
+      skippedEntries_other: ". Пропущено {n} нечитабельних записів",
+      importReadFailedAlert: "Не вдалося прочитати файл. Спробуйте ще раз."
+    },
+    "pt-BR": {
+      statCurrentLabel: "ATUAL",
+      statRemovedLabel: "REMOVIDO",
+      langSelectorAriaLabel: "Idioma",
+      btnExportTitle: "Baixar todos os dados do inventário como um arquivo de texto",
+      exportBtn: "Exportar",
+      btnImportTitle: "Adicionar itens de um arquivo de texto exportado anteriormente",
+      importBtn: "Importar",
+      searchPlaceholder: "Buscar por tipo, descrição ou notas…",
+      clearSearchTitle: "Limpar busca",
+      btnAddItem: "+ Adicionar item",
+      btnRemoveItem: "− Remover item",
+      tabCurrentInventory: "Inventário atual",
+      tabRemovedItems: "Itens removidos",
+      footerNote: "Os dados são armazenados apenas neste navegador (localStorage) — nada é enviado a lugar nenhum. Limpar os dados do navegador irá removê-los. Exporte regularmente para backup.",
+      installTitle: "Instalar FlyStock",
+      installDesc: "Instale o FlyStock para acesso rápido e uso offline. Seu inventário permanece neste dispositivo.",
+      installBtn: "Instalar",
+      installLater: "Depois",
+      storageErrorTitle: "Não foi possível ler o armazenamento do inventário",
+      storageErrorDesc: "Seus dados de inventário salvos parecem estar indisponíveis ou corrompidos. O FlyStock não os sobrescreveu.",
+      btnDownloadStorage: "Baixar dados do armazenamento",
+      btnResetInventory: "Redefinir inventário",
+      storageErrorWarning: "Redefinir substituirá permanentemente o inventário ilegível por um inventário vazio. Baixe os dados do armazenamento primeiro se quiser manter uma cópia.",
+      addPanelAriaLabel: "Adicionar item",
+      addPanelTitle: "Adicionar item",
+      closeAriaLabel: "Fechar",
+      itemTypeLabel: "Tipo de item",
+      newTypeNameLabel: "Nome do novo tipo",
+      newTypePlaceholder: "ex.: Ferramentas elétricas",
+      descriptionLabel: "Descrição",
+      addDescriptionPlaceholder: "ex.: Furadeira sem fio DeWalt 20V, número de série #4471",
+      noteLabel: "Nota",
+      addNotePlaceholder: "Nota opcional — condição, localização, origem…",
+      dateAddedLabel: "Data e hora de adição",
+      resetToNow: "Redefinir para agora",
+      addSubmitBtn: "Adicionar ao inventário",
+      removePanelAriaLabel: "Remover item",
+      removePanelTitle: "Remover item",
+      itemLabel: "Item",
+      dateRemovedLabel: "Data e hora de remoção",
+      removalNoteLabel: "Nota de remoção",
+      removeNotePlaceholder: "Nota opcional — motivo da remoção, destino, etc.",
+      removeSubmitBtn: "Remover do inventário",
+      editPanelAriaLabel: "Editar item",
+      editPanelTitle: "Editar item",
+      historyNotesLabel: "Notas do histórico",
+      addNoteLabel: "Adicionar uma nota",
+      newNoteTextPlaceholder: "O que aconteceu? ex.: Enviado para reparo…",
+      addNoteBtn: "+ Adicionar nota",
+      saveChangesBtn: "Salvar alterações",
+      restorePanelAriaLabel: "Restaurar item",
+      restorePanelTitle: "Restaurar item",
+      dateRestoredLabel: "Data e hora de restauração",
+      restoreNoteLabel: "Nota de restauração",
+      restoreNotePlaceholder: "Opcional — para onde foi, por quê, condição, etc.",
+      restoreSubmitBtn: "Restaurar ao inventário",
+
+      addNewTypeOption: "+ Adicionar novo tipo…",
+      noteLabelPrefix: "Nota: ",
+      addedDatePrefix: "Adicionado em ",
+      historyNoteCount_one: "{n} nota de histórico",
+      historyNoteCount_other: "{n} notas de histórico",
+      removedLabelPrefix: "REMOVIDO EM ",
+      restoreBtnLabel: "Restaurar",
+      editBtnLabel: "Editar",
+      removeBtnLabel: "Remover",
+      noMatchesTitle: "Nenhum resultado",
+      noMatchesCurrentDesc: "Nenhum item do inventário atual corresponde a “{query}”.",
+      noMatchesRemovedDesc: "Nenhum item removido corresponde a “{query}”.",
+      noInventoryTitle: "Nenhum inventário ainda",
+      noInventoryDesc: "Adicione seu primeiro item para começar.",
+      nothingRemovedTitle: "Nada removido ainda",
+      nothingRemovedDesc: "Os itens que você remover do inventário aparecerão aqui.",
+      saveFailedAlert: "Não foi possível salvar suas alterações. O armazenamento do navegador pode estar cheio ou indisponível.",
+      resetConfirm: "Redefinir inventário? Isso substituirá os dados salvos ilegíveis por um inventário vazio e não pode ser desfeito.",
+      resetDoneAlert: "O inventário foi redefinido.",
+      resetFailedAlert: "Não foi possível redefinir o inventário. O armazenamento do navegador está indisponível.",
+      addFlash_one: "✓ Adicionado “{desc}” — {n} item adicionado nesta sessão.",
+      addFlash_other: "✓ Adicionado “{desc}” — {n} itens adicionados nesta sessão.",
+      removeFlash_one: "✓ Removido “{desc}” — {n} item removido nesta sessão.",
+      removeFlash_other: "✓ Removido “{desc}” — {n} itens removidos nesta sessão.",
+      lastItemRemovedAlert: "Esse foi o último item — o inventário agora está vazio. Não há mais nada para remover.",
+      removeDisabledTitle: "Não há itens no inventário para remover",
+      noItemSelectedPreview: "Nenhum item selecionado.",
+      previewTypeAdded: "Tipo: {type} · Adicionado {date}",
+      previewNote: "Nota: {text}",
+      previewTypeRemoved: "Tipo: {type} · Removido {date}",
+      previewLatestNote: "Última nota: {text}",
+      deleteNoteTitle: "Excluir nota",
+      deleteNoteConfirm: "Excluir esta nota do histórico?",
+      noHistoryNotesYet: "Nenhuma nota de histórico ainda.",
+      exportEmptyAlert: "Ainda não há dados de inventário para exportar.",
+      importParseFailedAlert: "Não foi possível ler esse arquivo como uma exportação do FlyStock. Nenhum dado foi importado.",
+      importNoValidAlert: "Nenhum item válido foi encontrado nesse arquivo. Nada foi importado.",
+      importedCount_one: "{n} item importado — adicionado ao seu inventário existente",
+      importedCount_other: "{n} itens importados — adicionados ao seu inventário existente",
+      newTypesAdded_one: " ({n} novo tipo adicionado)",
+      newTypesAdded_other: " ({n} novos tipos adicionados)",
+      skippedEntries_one: ". {n} entrada ilegível ignorada",
+      skippedEntries_other: ". {n} entradas ilegíveis ignoradas",
+      importReadFailedAlert: "Não foi possível ler esse arquivo. Tente novamente."
+    }
+  };
+
+  function detectDefaultLang(){
+    try{
+      var saved = localStorage.getItem(LANG_KEY);
+      if(saved && translations[saved]) return saved;
+    }catch(e){}
+    var nav = ((navigator.language || navigator.userLanguage || "en") + "").toLowerCase();
+    if(nav.indexOf("uk") === 0) return "uk";
+    if(nav.indexOf("pt") === 0) return "pt-BR";
+    return "en";
+  }
+
+  var currentLang = detectDefaultLang();
+
+  function interpolate(str, vars){
+    if(!vars) return str;
+    return String(str).replace(/\{(\w+)\}/g, function(_, k){
+      return Object.prototype.hasOwnProperty.call(vars, k) ? vars[k] : "";
+    });
+  }
+
+  function t(key, vars){
+    var dict = translations[currentLang] || translations.en;
+    var str = dict[key] !== undefined ? dict[key] : (translations.en[key] !== undefined ? translations.en[key] : key);
+    return interpolate(str, vars);
+  }
+
+  function pluralFormFor(n, lang){
+    if(lang === "uk"){
+      var mod10 = n % 10, mod100 = n % 100;
+      if(mod10 === 1 && mod100 !== 11) return "one";
+      if(mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "few";
+      return "many";
+    }
+    return n === 1 ? "one" : "other";
+  }
+
+  function tCount(base, n, vars){
+    vars = vars ? Object.assign({}, vars) : {};
+    vars.n = n;
+    var dict = translations[currentLang] || translations.en;
+    var form = pluralFormFor(n, currentLang);
+    var str = dict[base + "_" + form] || dict[base + "_other"] ||
+      translations.en[base + "_" + form] || translations.en[base + "_other"];
+    return interpolate(str, vars);
+  }
+
+  function applyStaticTranslations(){
+    document.documentElement.setAttribute("lang", currentLang);
+    document.querySelectorAll("[data-i18n]").forEach(function(el){
+      el.textContent = t(el.getAttribute("data-i18n"));
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(function(el){
+      el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder")));
+    });
+    document.querySelectorAll("[data-i18n-aria-label]").forEach(function(el){
+      el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria-label")));
+    });
+    document.querySelectorAll("[data-i18n-title]").forEach(function(el){
+      el.setAttribute("title", t(el.getAttribute("data-i18n-title")));
+    });
+  }
+
+  // Type-select "+ Add new type…" options are generated by populateTypeSelect,
+  // so they carry no data-i18n attribute — refresh them directly by value.
+  function refreshNewTypeOptions(){
+    document.querySelectorAll('option[value="__new__"]').forEach(function(opt){
+      opt.textContent = t("addNewTypeOption");
+    });
+  }
+
+  // Applies a language switch across the whole page. Everything here is safe
+  // to re-run at any time: static labels, the current/removed lists (rebuilt
+  // fresh from `data`, which never changes here), and preview/status text
+  // recomputed from currently-selected values — none of it touches or resets
+  // in-progress form input (description/note/date fields the user may be
+  // mid-way through typing in an open panel).
+  function setLang(lang){
+    if(!translations[lang]) lang = "en";
+    currentLang = lang;
+    try{ localStorage.setItem(LANG_KEY, lang); }catch(e){}
+    applyStaticTranslations();
+    document.querySelectorAll(".lang-select").forEach(function(sel){ sel.value = currentLang; });
+    refreshNewTypeOptions();
+    if(typeof renderLists === "function") renderLists();
+    if(typeof updateRemovePreview === "function") updateRemovePreview();
+    if(typeof refreshRestorePreview === "function") refreshRestorePreview();
+    if(typeof renderEditNotesList === "function" && editingItemId) renderEditNotesList();
+  }
+
+  document.querySelectorAll(".lang-select").forEach(function(sel){
+    sel.addEventListener("change", function(){ setLang(sel.value); });
+  });
 
   // ---------- Persistence ----------
   function normalizeItem(it){
@@ -566,7 +999,7 @@
       return true;
     }catch(e){
       console.error("Failed to save inventory data:", e);
-      alert("Could not save your changes. Your browser storage may be full or unavailable.");
+      alert(t("saveFailedAlert"));
       return false;
     }
   }
@@ -588,15 +1021,15 @@
   }
   function showStorageError(){ document.getElementById("storageError").classList.remove("hidden"); }
   function resetInventory(){
-    if(!confirm("Reset inventory? This will replace the unreadable saved data with an empty inventory and cannot be undone.")) return;
+    if(!confirm(t("resetConfirm"))) return;
     try{
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ types: [], items: [] }));
       storageLoadError = null;
       data = { types: [], items: [] };
       document.getElementById("storageError").classList.add("hidden");
       renderLists();
-      alert("Inventory has been reset.");
-    }catch(e){ alert("Could not reset inventory. Browser storage is unavailable."); }
+      alert(t("resetDoneAlert"));
+    }catch(e){ alert(t("resetFailedAlert")); }
   }
 
   var data = loadData();
@@ -620,8 +1053,9 @@
   }
   function fmtDate(iso){
     var d = new Date(iso);
-    return d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}) +
-      " · " + d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
+    var locale = currentLang === "uk" ? "uk-UA" : currentLang === "pt-BR" ? "pt-BR" : undefined;
+    return d.toLocaleDateString(locale,{month:"short",day:"numeric",year:"numeric"}) +
+      " · " + d.toLocaleTimeString(locale,{hour:"numeric",minute:"2-digit"});
   }
   function pad(n){ return n < 10 ? "0" + n : "" + n; }
   function nowLocalInputValue(){
@@ -727,7 +1161,7 @@
       comment.className = "gi-comment";
       var lbl = document.createElement("span");
       lbl.className = "label";
-      lbl.textContent = "Note: ";
+      lbl.textContent = t("noteLabelPrefix");
       comment.appendChild(lbl);
       comment.appendChild(document.createTextNode(latestNote.text));
       body.appendChild(comment);
@@ -735,10 +1169,10 @@
 
     var meta = document.createElement("div");
     meta.className = "gi-meta";
-    var metaText = "Added " + fmtDate(it.dateAdded);
+    var metaText = t("addedDatePrefix") + fmtDate(it.dateAdded);
     var noteCount = getSortedNotes(it).length;
     if(noteCount){
-      metaText += "  ·  " + noteCount + " history note" + (noteCount === 1 ? "" : "s");
+      metaText += "  ·  " + tCount("historyNoteCount", noteCount);
     }
     meta.textContent = metaText;
     body.appendChild(meta);
@@ -748,7 +1182,7 @@
       rInfo.className = "gi-removal";
       var rLbl = document.createElement("div");
       rLbl.className = "label";
-      rLbl.textContent = "REMOVED " + fmtDate(it.dateRemoved).toUpperCase();
+      rLbl.textContent = t("removedLabelPrefix") + fmtDate(it.dateRemoved).toUpperCase();
       rInfo.appendChild(rLbl);
       body.appendChild(rInfo);
     }
@@ -762,7 +1196,7 @@
       var restoreBtn = document.createElement("button");
       restoreBtn.className = "icon-btn edit-btn";
       restoreBtn.type = "button";
-      restoreBtn.textContent = "Restore";
+      restoreBtn.textContent = t("restoreBtnLabel");
       restoreBtn.addEventListener("click", function(){ openRestorePanel(it.id); });
       actions.appendChild(restoreBtn);
     }
@@ -770,7 +1204,7 @@
     var editBtn = document.createElement("button");
     editBtn.className = "icon-btn edit-btn";
     editBtn.type = "button";
-    editBtn.textContent = "Edit";
+    editBtn.textContent = t("editBtnLabel");
     editBtn.addEventListener("click", function(){ openEditPanel(it.id); });
     actions.appendChild(editBtn);
 
@@ -778,7 +1212,7 @@
       var removeBtn = document.createElement("button");
       removeBtn.className = "icon-btn";
       removeBtn.type = "button";
-      removeBtn.textContent = "Remove";
+      removeBtn.textContent = t("removeBtnLabel");
       removeBtn.addEventListener("click", function(){ openRemovePanel(it.id); });
       actions.appendChild(removeBtn);
     }
@@ -870,14 +1304,14 @@
       var h3 = emptyStateEl.querySelector("h3");
       var p = emptyStateEl.querySelector("p");
       if(searchQuery){
-        h3.textContent = "No matches";
-        p.textContent = "No " + (isCurrentTab ? "current inventory" : "removed items") + " match “" + searchQuery + "”.";
+        h3.textContent = t("noMatchesTitle");
+        p.textContent = t(isCurrentTab ? "noMatchesCurrentDesc" : "noMatchesRemovedDesc", { query: searchQuery });
       } else if(isCurrentTab){
-        h3.textContent = "No inventory yet";
-        p.textContent = "Add your first item to get started.";
+        h3.textContent = t("noInventoryTitle");
+        p.textContent = t("noInventoryDesc");
       } else {
-        h3.textContent = "Nothing removed yet";
-        p.textContent = "Items you take out of inventory will show up here.";
+        h3.textContent = t("nothingRemovedTitle");
+        p.textContent = t("nothingRemovedDesc");
       }
     }
 
@@ -963,7 +1397,7 @@
     });
     var newOpt = document.createElement("option");
     newOpt.value = "__new__";
-    newOpt.textContent = "+ Add new type…";
+    newOpt.textContent = t("addNewTypeOption");
     selectEl.appendChild(newOpt);
 
     if(preselect && sorted.indexOf(preselect) !== -1){
@@ -1016,8 +1450,7 @@
     addSessionCount++;
     var shortDesc = desc.length > 44 ? desc.slice(0,44) + "…" : desc;
     addSessionFlash.hidden = false;
-    addSessionFlash.textContent = "✓ Added \u201C" + shortDesc + "\u201D — " +
-      addSessionCount + " item" + (addSessionCount === 1 ? "" : "s") + " added this session.";
+    addSessionFlash.textContent = tCount("addFlash", addSessionCount, { desc: shortDesc });
   }
 
   // Ready the form for the next item: clear Description (always unique) and refresh the
@@ -1080,7 +1513,7 @@
   function updateRemoveAvailability(){
     var hasActive = data.items.some(function(it){ return it.status === "active"; });
     btnRemove.disabled = !hasActive;
-    btnRemove.title = hasActive ? "" : "No items in inventory to remove";
+    btnRemove.title = hasActive ? "" : t("removeDisabledTitle");
   }
 
   function populateRemoveTypeSelect(presetType){
@@ -1118,25 +1551,25 @@
     var it = data.items.find(function(x){ return x.id === id; });
     if(!it){
       removePreview.className = "preview empty-preview";
-      removePreview.textContent = "No item selected.";
+      removePreview.textContent = t("noItemSelectedPreview");
       removeSubmitBtn.disabled = true;
       return;
     }
     removeSubmitBtn.disabled = false;
     removePreview.className = "preview";
     removePreview.innerHTML = "";
-    var t = document.createElement("div");
-    t.className = "ptitle";
-    t.textContent = it.description;
-    removePreview.appendChild(t);
+    var titleEl = document.createElement("div");
+    titleEl.className = "ptitle";
+    titleEl.textContent = it.description;
+    removePreview.appendChild(titleEl);
     var meta = document.createElement("div");
-    meta.textContent = "Type: " + it.type + " · Added " + fmtDate(it.dateAdded);
+    meta.textContent = t("previewTypeAdded", { type: it.type, date: fmtDate(it.dateAdded) });
     removePreview.appendChild(meta);
     var latestNote = getLatestNote(it);
     if(latestNote){
       var c = document.createElement("div");
       c.style.marginTop = "4px";
-      c.textContent = "Note: " + latestNote.text;
+      c.textContent = t("previewNote", { text: latestNote.text });
       removePreview.appendChild(c);
     }
   }
@@ -1167,8 +1600,7 @@
     removeSessionCount++;
     var shortDesc = desc.length > 44 ? desc.slice(0,44) + "…" : desc;
     removeSessionFlash.hidden = false;
-    removeSessionFlash.textContent = "✓ Removed \u201C" + shortDesc + "\u201D — " +
-      removeSessionCount + " item" + (removeSessionCount === 1 ? "" : "s") + " removed this session.";
+    removeSessionFlash.textContent = tCount("removeFlash", removeSessionCount, { desc: shortDesc });
   }
 
   // Ready the form for the next removal: refresh the Type/Item lists against what's still
@@ -1180,7 +1612,7 @@
     if(!stillHasStock){
       closePanels();
       setTimeout(function(){
-        alert("That was the last item — inventory is now empty. Nothing left to remove.");
+        alert(t("lastItemRemovedAlert"));
       }, 250);
       return;
     }
@@ -1224,12 +1656,11 @@
   var restoreForm = document.getElementById("restoreForm");
   var restoringItemId = null;
 
-  function openRestorePanel(itemId){
-    var it = data.items.find(function(x){ return x.id === itemId; });
-    if(!it || it.status !== "removed") return;
-    restoringItemId = itemId;
-    restoreDateInput.value = nowLocalInputValue();
-    restoreNote.value = "";
+  // Renders the restore-panel preview for a given item. Split out from
+  // openRestorePanel so a language switch can refresh this text in place
+  // (via refreshRestorePreview below) without resetting the panel's date/note
+  // inputs the user may already be filling in.
+  function renderRestorePreviewFor(it){
     restorePreview.className = "preview";
     restorePreview.innerHTML = "";
     var title = document.createElement("div");
@@ -1237,15 +1668,30 @@
     title.textContent = it.description;
     restorePreview.appendChild(title);
     var meta = document.createElement("div");
-    meta.textContent = "Type: " + it.type + " · Removed " + fmtDate(it.dateRemoved);
+    meta.textContent = t("previewTypeRemoved", { type: it.type, date: fmtDate(it.dateRemoved) });
     restorePreview.appendChild(meta);
     var latest = getLatestNote(it);
     if(latest){
       var note = document.createElement("div");
       note.style.marginTop = "4px";
-      note.textContent = "Latest note: " + latest.text;
+      note.textContent = t("previewLatestNote", { text: latest.text });
       restorePreview.appendChild(note);
     }
+  }
+
+  function refreshRestorePreview(){
+    if(!restoringItemId) return;
+    var it = data.items.find(function(x){ return x.id === restoringItemId; });
+    if(it) renderRestorePreviewFor(it);
+  }
+
+  function openRestorePanel(itemId){
+    var it = data.items.find(function(x){ return x.id === itemId; });
+    if(!it || it.status !== "removed") return;
+    restoringItemId = itemId;
+    restoreDateInput.value = nowLocalInputValue();
+    restoreNote.value = "";
+    renderRestorePreviewFor(it);
     openPanel(restorePanel);
     setTimeout(function(){ restoreNote.focus(); }, 220);
   }
@@ -1306,7 +1752,7 @@
     if(!it || !it.notes || it.notes.length === 0){
       var empty = document.createElement("div");
       empty.className = "notes-empty";
-      empty.textContent = "No history notes yet.";
+      empty.textContent = t("noHistoryNotesYet");
       editNotesList.appendChild(empty);
       return;
     }
@@ -1321,19 +1767,19 @@
       d.className = "note-date";
       d.textContent = fmtDate(note.date);
       body.appendChild(d);
-      var t = document.createElement("div");
-      t.className = "note-text";
-      t.textContent = note.text;
-      body.appendChild(t);
+      var textEl = document.createElement("div");
+      textEl.className = "note-text";
+      textEl.textContent = note.text;
+      body.appendChild(textEl);
       row.appendChild(body);
 
       var del = document.createElement("button");
       del.type = "button";
       del.className = "note-del";
-      del.title = "Delete note";
+      del.title = t("deleteNoteTitle");
       del.textContent = "×";
       del.addEventListener("click", function(){
-        if(!confirm("Delete this history note?")) return;
+        if(!confirm(t("deleteNoteConfirm"))) return;
         it.notes = it.notes.filter(function(n){ return n.id !== note.id; });
         saveData();
         renderEditNotesList();
@@ -1484,7 +1930,7 @@
 
   function exportData(){
     if(data.items.length === 0){
-      alert("There's no inventory data yet to export.");
+      alert(t("exportEmptyAlert"));
       return;
     }
     var text = buildExportText();
@@ -1592,16 +2038,16 @@
       result = parseImportText(text);
     }catch(e){
       console.error("Failed to parse import file:", e);
-      alert("That file couldn't be read as a FlyStock export. No data was imported.");
+      alert(t("importParseFailedAlert"));
       return;
     }
     if(result.imported.length === 0){
-      alert("No valid items were found in that file. Nothing was imported.");
+      alert(t("importNoValidAlert"));
       return;
     }
     var newTypes = 0;
     result.imported.forEach(function(it){
-      var existed = data.types.some(function(t){ return t.toLowerCase() === it.type.toLowerCase(); });
+      var existed = data.types.some(function(dt){ return dt.toLowerCase() === it.type.toLowerCase(); });
       if(!existed) newTypes++;
       ensureType(it.type);
       data.items.push(it);
@@ -1609,10 +2055,9 @@
     saveData();
     renderLists();
 
-    var msg = "Imported " + result.imported.length + " item" + (result.imported.length === 1 ? "" : "s") +
-      " — added to your existing inventory";
-    if(newTypes) msg += " (" + newTypes + " new type" + (newTypes === 1 ? "" : "s") + " added)";
-    if(result.skipped) msg += ". Skipped " + result.skipped + " unreadable entr" + (result.skipped === 1 ? "y" : "ies");
+    var msg = tCount("importedCount", result.imported.length);
+    if(newTypes) msg += tCount("newTypesAdded", newTypes);
+    if(result.skipped) msg += tCount("skippedEntries", result.skipped);
     alert(msg + ".");
   }
 
@@ -1626,7 +2071,7 @@
       importFromText(String(e.target.result || ""));
     };
     reader.onerror = function(){
-      alert("Could not read that file. Please try again.");
+      alert(t("importReadFailedAlert"));
     };
     reader.readAsText(file);
     importFileInput.value = "";
@@ -1668,6 +2113,8 @@
   }
 
   // ---------- Init ----------
+  applyStaticTranslations();
+  document.querySelectorAll(".lang-select").forEach(function(sel){ sel.value = currentLang; });
   renderLists();
   if(storageLoadError) showStorageError();
 })();
