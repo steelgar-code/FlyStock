@@ -1,11 +1,16 @@
 # FlyStock
 
-Simple, offline-first inventory tracker for counting and managing stock — no account, no server, no build step.
+Offline-first item tracker for logging equipment and stock in and out, with a full history — no account, no server, no build step.
 
 ## Features
 
-- **Inventory tracking** — add, edit, and manage stock items and quantities.
-- **Import / export** — back up or transfer your inventory as a plain text file.
+- **Item-by-item tracking** — log each item with its own description (e.g. a serial number or identifying detail), not a bulk quantity count.
+- **Add → Remove → Restore lifecycle** — move an item from current stock to a separate Removed Items list with a timestamped reason, and restore it back if it was removed by mistake.
+- **Notes history** — attach multiple timestamped notes to an item over its lifetime (condition, location, source, etc.).
+- **Types with collapsible, color-coded groups** — organize items into types; the list groups and color-codes them automatically, and each group can be collapsed or expanded.
+- **Batch entry** — after adding one item, the form stays open with just the description cleared, so you can log several similar items back-to-back without re-entering the type, date, or note.
+- **Search** — filter across current and removed items.
+- **Backup & export** — export your inventory, including notes and removal history, as a plain-text file, and import it back in (additively — nothing already saved is overwritten). Since everything lives in browser storage, exporting a backup periodically is the only way to keep your data safe.
 - **Installable PWA** — install to your home screen and use offline via a service worker.
 - **Multi-language** — available in English, Ukrainian, and Portuguese (BR).
 - **Local-only storage** — all data stays in your browser's `localStorage`; nothing is sent to a server.

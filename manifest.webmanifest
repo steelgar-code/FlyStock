@@ -1,7 +1,7 @@
 {
   "name":"FlyStock",
   "short_name":"FlyStock",
-  "description":"Simple inventory manager",
+  "description":"Item tracker with add/remove/restore history",
   "start_url":"./",
   "scope":"./",
   "display":"standalone",
