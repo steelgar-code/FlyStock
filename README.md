@@ -1,5 +1,7 @@
 # FlyStock
 
+[Українська](README.uk.md) · [Português (BR)](README.pt-BR.md)
+
 Offline-first item tracker for logging equipment and stock in and out, with a full history — no account, no server, no build step.
 
 ## Features
