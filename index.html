@@ -981,6 +981,11 @@
   function normalizeItem(it){
     if(!it || typeof it !== "object") return null;
     if(!Array.isArray(it.notes)) it.notes = [];
+    // Repair only a missing/unusable id; any non-empty string id is kept as is.
+    if(typeof it.id !== "string" || it.id === "") it.id = uid();
+    it.notes.forEach(function(n){
+      if(n && typeof n === "object" && (typeof n.id !== "string" || n.id === "")) n.id = uid();
+    });
 
     // Backward compatibility: migrate the legacy comment into the history as its
     // first note, using the item's added date. Legacy removal comments are also
@@ -1012,6 +1017,12 @@
     if(!Array.isArray(parsed.types)) parsed.types = [];
     if(!Array.isArray(parsed.items)) parsed.items = [];
     parsed.items = parsed.items.map(normalizeItem).filter(Boolean);
+    // Duplicate ids: the first item keeps its id, later ones get a fresh one.
+    var seenIds = Object.create(null);
+    parsed.items.forEach(function(it){
+      if((it.id in seenIds)) it.id = uid();
+      seenIds[it.id] = true;
+    });
     return parsed;
   }
 
@@ -1936,6 +1947,8 @@
     btnExport.disabled = data.items.length === 0;
   }
 
+  var SAFE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
+
   function buildExportText(){
     var now = new Date();
     var activeCount = data.items.filter(function(it){ return it.status === "active"; }).length;
@@ -1946,6 +1959,7 @@
     lines.push("# Current items: " + activeCount + " | Removed items: " + removedCount);
     lines.push("# ---");
     lines.push("# Each item below is a block of labeled fields, separated by a blank line.");
+    lines.push("# The ID line is the item's identifier; it lets other apps keep their links to the item.");
     lines.push("# Optional NOTE lines (format: NOTE: <date> | <text>) capture history notes.");
     lines.push("# This file can be re-imported into FlyStock — imported items are added");
     lines.push("# to whatever is already there, nothing gets overwritten.");
@@ -1954,6 +1968,7 @@
     data.items.forEach(function(it){
       var exportNotes = getSortedNotes(it).slice().reverse();
       var firstExportNote = exportNotes.length ? exportNotes[0] : null;
+      if(typeof it.id === "string" && SAFE_ID_RE.test(it.id)) lines.push("ID: " + it.id);
       lines.push("TYPE: " + escapeField(it.type));
       lines.push("DESCRIPTION: " + escapeField(it.description));
       lines.push("COMMENT: " + escapeField(firstExportNote ? firstExportNote.text : ""));
@@ -2005,6 +2020,8 @@
 
     var imported = [];
     var skipped = 0;
+    var takenIds = Object.create(null);
+    data.items.forEach(function(it){ takenIds[it.id] = true; });
 
     blocks.forEach(function(blockLines){
       var fields = {};
@@ -2033,8 +2050,12 @@
       var dateAdded = (dateAddedParsed && !isNaN(dateAddedParsed.getTime()))
         ? dateAddedParsed.toISOString() : new Date().toISOString();
 
+      var itemId = fields.ID || "";
+      if(!SAFE_ID_RE.test(itemId) || (itemId in takenIds)) itemId = uid();
+      takenIds[itemId] = true;
+
       var item = {
-        id: uid(),
+        id: itemId,
         type: type,
         description: description,
         status: status,
