@@ -1,0 +1,11 @@
+{
+  "name": "flystock",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "serve": "node tests/support/server.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

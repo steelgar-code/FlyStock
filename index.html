@@ -238,6 +238,18 @@
     color:var(--success);font-size:12.5px;font-weight:600;line-height:1.4;
     padding:10px 12px;border-radius:8px;
   }
+  .deeplink-notice{
+    position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;
+    display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);
+    background:var(--surface);border:1px solid var(--border);color:var(--text);
+    font-size:13px;font-weight:600;line-height:1.4;padding:10px 12px 10px 14px;
+    border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.35);
+  }
+  .deeplink-notice[hidden]{display:none;}
+  .deeplink-notice button{
+    background:none;border:0;color:var(--text-dim);font-size:18px;line-height:1;
+    cursor:pointer;padding:2px 4px;
+  }
   .notes-list{
     display:flex;flex-direction:column;gap:8px;max-height:220px;
     overflow-y:auto;margin-bottom:2px;
@@ -376,6 +388,8 @@
       <div class="install-prompt-actions"><button class="btn-submit" id="btnInstallApp" type="button" data-i18n="installBtn">Install</button><button class="btn-ghost" id="btnDismissInstall" type="button" data-i18n="installLater">Later</button></div>
     </div>
   </div>
+
+  <div class="deeplink-notice" id="deepLinkNotice" role="status" hidden><span data-i18n="deepLinkNotFound">Item not found in this inventory</span><button type="button" id="deepLinkNoticeClose" aria-label="Close" data-i18n-aria-label="closeAriaLabel">×</button></div>
 
   <div class="storage-error hidden" id="storageError" role="alertdialog" aria-modal="true" aria-labelledby="storageErrorTitle">
     <div class="storage-error-card">
@@ -561,6 +575,7 @@
       installDesc: "Install FlyStock for quick access and offline use. Your inventory stays on this device.",
       installBtn: "Install",
       installLater: "Later",
+      deepLinkNotFound: "Item not found in this inventory",
       storageErrorTitle: "Inventory storage could not be read",
       storageErrorDesc: "Your saved inventory data appears to be unavailable or corrupted. FlyStock has not overwritten it.",
       btnDownloadStorage: "Download Storage Data",
@@ -665,6 +680,7 @@
       installDesc: "Встановіть FlyStock для швидкого доступу та роботи офлайн. Ваш інвентар залишається на цьому пристрої.",
       installBtn: "Встановити",
       installLater: "Пізніше",
+      deepLinkNotFound: "Елемент не знайдено в цьому інвентарі",
       storageErrorTitle: "Не вдалося прочитати сховище інвентарю",
       storageErrorDesc: "Ваші збережені дані інвентарю недоступні або пошкоджені. FlyStock не перезаписав їх.",
       btnDownloadStorage: "Завантажити дані сховища",
@@ -781,6 +797,7 @@
       installDesc: "Instale o FlyStock para acesso rápido e uso offline. Seu inventário permanece neste dispositivo.",
       installBtn: "Instalar",
       installLater: "Depois",
+      deepLinkNotFound: "Item não encontrado neste inventário",
       storageErrorTitle: "Não foi possível ler o armazenamento do inventário",
       storageErrorDesc: "Seus dados de inventário salvos parecem estar indisponíveis ou corrompidos. O FlyStock não os sobrescreveu.",
       btnDownloadStorage: "Baixar dados do armazenamento",
@@ -1371,7 +1388,13 @@
   var restorePanel = document.getElementById("restorePanel");
   var ALL_PANELS = [addPanel, removePanel, editPanel, restorePanel];
 
+  var panelHideTimer = null;
   function openPanel(panel){
+    // Cancel a pending hide from closePanels() so it cannot hide this panel.
+    if(panelHideTimer){ clearTimeout(panelHideTimer); panelHideTimer = null; }
+    ALL_PANELS.forEach(function(p){
+      if(p !== panel){ p.classList.remove("show"); p.classList.add("hidden"); }
+    });
     overlay.classList.remove("hidden");
     panel.classList.remove("hidden");
     requestAnimationFrame(function(){
@@ -1382,7 +1405,9 @@
   function closePanels(){
     ALL_PANELS.forEach(function(p){ p.classList.remove("show"); });
     overlay.classList.remove("show");
-    setTimeout(function(){
+    if(panelHideTimer) clearTimeout(panelHideTimer);
+    panelHideTimer = setTimeout(function(){
+      panelHideTimer = null;
       ALL_PANELS.forEach(function(p){ p.classList.add("hidden"); });
       overlay.classList.add("hidden");
     }, 200);
@@ -2130,11 +2155,48 @@
     window.addEventListener("load", function(){ navigator.serviceWorker.register("./sw.js").catch(function(err){ console.error("FlyStock service worker registration failed:",err); }); });
   }
 
+  // ---------- Deep links (#edit=<id> / #remove=<id>) ----------
+  var deepLinkNotice = document.getElementById("deepLinkNotice");
+  var deepLinkNoticeTimer = null;
+  function hideDeepLinkNotice(){
+    deepLinkNotice.hidden = true;
+    if(deepLinkNoticeTimer){ clearTimeout(deepLinkNoticeTimer); deepLinkNoticeTimer = null; }
+  }
+  function showDeepLinkNotice(){
+    hideDeepLinkNotice();
+    deepLinkNotice.hidden = false;
+    deepLinkNoticeTimer = setTimeout(hideDeepLinkNotice, 8000);
+  }
+  document.getElementById("deepLinkNoticeClose").addEventListener("click", hideDeepLinkNotice);
+
+  function parseDeepLink(hash){
+    var m = /^#(edit|remove)=([A-Za-z0-9][A-Za-z0-9_-]{0,63})$/.exec(hash || "");
+    return m ? { action: m[1], id: m[2] } : null;
+  }
+  function handleDeepLink(){
+    if(storageLoadError) return;
+    var link = parseDeepLink(location.hash);
+    if(!location.hash) return;
+    try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+    if(!link) return;
+    var it = data.items.find(function(x){ return x.id === link.id; });
+    if(!it){ showDeepLinkNotice(); return; }
+    hideDeepLinkNotice();
+    var isOpen = ALL_PANELS.some(function(p){ return !p.classList.contains("hidden"); });
+    if(isOpen) closePanels();
+    var tab = it.status === "removed" ? "removed" : "current";
+    if(activeTab !== tab){ setActiveTab(tab); renderLists(); }
+    if(link.action === "remove" && it.status !== "removed") openRemovePanel(it.id);
+    else openEditPanel(it.id);
+  }
+  window.addEventListener("hashchange", handleDeepLink);
+
   // ---------- Init ----------
   applyStaticTranslations();
   document.querySelectorAll(".lang-select").forEach(function(sel){ sel.value = currentLang; });
   renderLists();
   if(storageLoadError) showStorageError();
+  handleDeepLink();
 })();
 </script>
 </body>
