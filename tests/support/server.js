@@ -102,7 +102,7 @@ function startServer({ root = REPO_ROOT, mount = '/', port = 0 } = {}) {
 module.exports = { startServer, REPO_ROOT };
 
 if (require.main === module) {
-  const PORT = Number(process.env.PORT) || 4173;
+  const PORT = Number(process.env.PORT) || 4174;
   startServer({ root: REPO_ROOT, mount: '/', port: PORT })
     .then((s) => console.log(`Serving ${REPO_ROOT} on ${s.url}`))
     .catch((err) => { console.error(err); process.exit(1); });

@@ -1,6 +1,6 @@
 const { defineConfig, devices } = require('@playwright/test');
 
-const PORT = Number(process.env.PORT) || 4173;
+const PORT = Number(process.env.PORT) || 4174;
 // Optional: point at a specific Chromium binary if the default lookup fails.
 const executablePath = process.env.CHROMIUM_EXECUTABLE_PATH || undefined;
 
