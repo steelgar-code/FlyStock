@@ -1961,6 +1961,7 @@
     lines.push("# Each item below is a block of labeled fields, separated by a blank line.");
     lines.push("# The ID line is the item's identifier; it lets other apps keep their links to the item.");
     lines.push("# Optional NOTE lines (format: NOTE: <date> | <text>) capture history notes.");
+    lines.push("# COMMENT_DATE is the date of the COMMENT note (optional; defaults to DATE_ADDED).");
     lines.push("# This file can be re-imported into FlyStock — imported items are added");
     lines.push("# to whatever is already there, nothing gets overwritten.");
     lines.push("# ---");
@@ -1972,6 +1973,7 @@
       lines.push("TYPE: " + escapeField(it.type));
       lines.push("DESCRIPTION: " + escapeField(it.description));
       lines.push("COMMENT: " + escapeField(firstExportNote ? firstExportNote.text : ""));
+      if(firstExportNote) lines.push("COMMENT_DATE: " + firstExportNote.date);
       lines.push("DATE_ADDED: " + it.dateAdded);
       lines.push("STATUS: " + it.status);
       if(it.status === "removed"){
@@ -2065,7 +2067,10 @@
       };
       if(fields.COMMENT){
         var legacyComment = unescapeField(fields.COMMENT);
-        if(legacyComment) item.notes.push({ id: uid(), date: dateAdded, text: legacyComment });
+        var commentDateParsed = fields.COMMENT_DATE ? new Date(fields.COMMENT_DATE) : null;
+        var commentDate = (commentDateParsed && !isNaN(commentDateParsed.getTime()))
+          ? commentDateParsed.toISOString() : dateAdded;
+        if(legacyComment) item.notes.push({ id: uid(), date: commentDate, text: legacyComment });
       }
 
       if(status === "removed"){

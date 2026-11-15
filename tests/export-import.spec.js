@@ -84,6 +84,84 @@ test('round trip into an empty inventory preserves ids and content', async ({ pa
   await ctx.close();
 });
 
+const sortNotes = (notes) => notes.map((n) => ({ date: n.date, text: n.text }))
+  .sort((a, b) => (a.date + a.text).localeCompare(b.date + b.text));
+
+test('round trip preserves every note date when notes differ from dateAdded', async ({ page, browser }) => {
+  const inv = {
+    types: ['Tools'],
+    items: [
+      item({ id: UUID1, description: 'Active one', dateAdded: '2025-01-10T09:00:00.000Z', notes: [
+        { id: 'a1', date: '2025-02-01T10:00:00.000Z', text: 'first' },
+        { id: 'a2', date: '2025-03-05T11:30:00.000Z', text: 'second | pipe' },
+        { id: 'a3', date: '2025-04-09T08:15:00.000Z', text: 'third' },
+      ] }),
+      item({ id: UUID2, description: 'Removed one', status: 'removed', dateAdded: '2025-01-11T09:00:00.000Z',
+        dateRemoved: '2025-06-01T09:00:00.000Z', notes: [
+          { id: 'r1', date: '2025-02-02T10:00:00.000Z', text: 'r first' },
+          { id: 'r2', date: '2025-03-06T11:30:00.000Z', text: 'r second' },
+          { id: 'r3', date: '2025-04-10T08:15:00.000Z', text: 'r third' },
+        ] }),
+    ],
+  };
+  await openApp(page, { inventory: inv });
+  const text = await doExport(page);
+  const ctx = await browser.newContext(CONTEXT_OPTIONS);
+  const p2 = await ctx.newPage();
+  const messages = watchDialogs(p2);
+  await openApp(p2);
+  await doImport(p2, text, messages);
+  const { parsed } = await store(p2);
+  expect(parsed.items).toHaveLength(2);
+  parsed.items.forEach((i, k) => {
+    expect(i.notes).toHaveLength(3);
+    expect(sortNotes(i.notes)).toEqual(sortNotes(inv.items[k].notes));
+  });
+  await ctx.close();
+});
+
+test('export writes COMMENT_DATE right after COMMENT only when item has notes', async ({ page }) => {
+  const inv = {
+    types: ['Tools'],
+    items: [
+      item({ id: UUID1, description: 'With notes', notes: [
+        { id: 'n1', date: '2025-02-01T10:00:00.000Z', text: 'older' },
+        { id: 'n2', date: '2025-03-01T10:00:00.000Z', text: 'newer' },
+      ] }),
+      item({ id: UUID2, description: 'No notes' }),
+    ],
+  };
+  await openApp(page, { inventory: inv });
+  const lines = (await doExport(page)).split('\n');
+  const i1 = lines.indexOf('ID: ' + UUID1);
+  const c = lines.findIndex((l, k) => k > i1 && l.startsWith('COMMENT:'));
+  expect(lines[c]).toBe('COMMENT: older');
+  expect(lines[c + 1]).toBe('COMMENT_DATE: 2025-02-01T10:00:00.000Z');
+  const i2 = lines.indexOf('ID: ' + UUID2);
+  const end = lines.indexOf('', i2);
+  expect(lines.slice(i2, end).some((l) => l.startsWith('COMMENT_DATE'))).toBe(false);
+  expect(lines.slice(i2, end)).toContain('COMMENT: ');
+});
+
+test('COMMENT_DATE: valid used, invalid/empty fall back to DATE_ADDED, no COMMENT means no note', async ({ page }) => {
+  const messages = watchDialogs(page);
+  await openApp(page);
+  const mk = (d, extra) => ['TYPE: T', 'DESCRIPTION: ' + d].concat(extra, ['DATE_ADDED: 2025-01-10T09:00:00.000Z', 'STATUS: active', '']).join('\n');
+  const text = [
+    mk('valid', ['COMMENT: c', 'COMMENT_DATE: 2025-05-05T05:05:05.000Z']),
+    mk('bad', ['COMMENT: c', 'COMMENT_DATE: not-a-date']),
+    mk('empty', ['COMMENT: c', 'COMMENT_DATE: ']),
+    mk('orphan', ['COMMENT_DATE: 2025-05-05T05:05:05.000Z']),
+  ].join('\n');
+  await doImport(page, text, messages);
+  const { parsed } = await store(page);
+  const by = Object.fromEntries(parsed.items.map((i) => [i.description, i.notes.map((n) => ({ date: n.date, text: n.text }))]));
+  expect(by.valid).toEqual([{ date: '2025-05-05T05:05:05.000Z', text: 'c' }]);
+  expect(by.bad).toEqual([{ date: '2025-01-10T09:00:00.000Z', text: 'c' }]);
+  expect(by.empty).toEqual([{ date: '2025-01-10T09:00:00.000Z', text: 'c' }]);
+  expect(by.orphan).toEqual([]);
+});
+
 test('importing own export into same inventory adds copies, originals untouched', async ({ page }) => {
   const messages = watchDialogs(page);
   await openApp(page, { inventory: INV });
